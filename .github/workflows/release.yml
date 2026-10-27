@@ -5,7 +5,8 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    # Full versions only: moving the Action's major tag (v0) must not start a release.
+    tags: ['v*.*.*']
   workflow_dispatch:
 
 permissions:
