@@ -5,7 +5,9 @@ Releases are cut from `main` by pushing a version tag; GitHub Actions does the r
 ## One-time setup
 
 1. **npm** — publish the first version by hand so the package exists: `npm login`, then `npm publish --access public` from a clean checkout of the tagged commit.
-2. Then, on npmjs.com → the package → *Settings → Trusted publishing*, add GitHub Actions: repository `baselissmail/smart-doctor`, workflow `release.yml`, environment `npm`. From then on the workflow publishes with provenance and no npm token is stored anywhere. Optionally disallow token-based publishing.
+2. Then link the package to the release workflow (needs your npm 2FA; npm 11.19+ requires the permission flag):
+   `npm trust github smart-doctor --file release.yml --repo baselissmail/smart-doctor --env npm --allow-publish --yes`
+   From then on the workflow publishes with provenance and no npm token is stored anywhere. The same setting is on npmjs.com under the package's *Settings → Trusted publishing*, where you can also disallow token-based publishing.
 3. **GitHub** — create an environment named `npm` (Settings → Environments), optionally with a required reviewer so every publish needs a click. Enable *Private vulnerability reporting* (Settings → Security), *Discussions*, and *Pages* with source "GitHub Actions".
 
 ## Every release
