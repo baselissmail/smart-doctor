@@ -1,0 +1,81 @@
+{
+  "name": "smart-doctor",
+  "version": "0.2.0",
+  "description": "Find out why a SMART on FHIR login fails — backend services or user sign-in — locally, without your keys or secrets ever leaving your machine.",
+  "keywords": [
+    "fhir",
+    "smart-on-fhir",
+    "backend-services",
+    "oauth2",
+    "jwt",
+    "private_key_jwt",
+    "ehr",
+    "epic",
+    "healthcare",
+    "interoperability",
+    "smart-app-launch",
+    "pkce",
+    "oidc",
+    "troubleshooting",
+    "diagnostics"
+  ],
+  "homepage": "https://baselissmail.github.io/smart-doctor/",
+  "bugs": {
+    "url": "https://github.com/baselissmail/smart-doctor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baselissmail/smart-doctor.git"
+  },
+  "license": "MIT",
+  "author": "Basel Issmail <basel.issmail@gmail.com>",
+  "type": "module",
+  "bin": {
+    "smart-doctor": "bin/smart-doctor.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./mock": "./src/mock/server.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    "README.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm test",
+    "mock": "node bin/smart-doctor.js mock",
+    "demo": "node scripts/demo.js",
+    "ui": "node bin/smart-doctor.js ui --demo",
+    "build:binaries": "node scripts/build-binaries.mjs",
+    "smoke:binary": "scripts/binary-smoke.sh dist/smart-doctor-linux-x64",
+    "smoke:ui": "node scripts/ui-smoke.mjs",
+    "smoke:sandbox": "node scripts/sandbox-smoke.mjs",
+    "site": "node site/build.mjs --serve",
+    "site:build": "node site/build.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@fontsource-variable/atkinson-hyperlegible-mono": "5.3.0",
+    "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
+    "jose": "5.10.0",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.10"
+  }
+}

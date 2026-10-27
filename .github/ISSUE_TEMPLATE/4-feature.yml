@@ -1,0 +1,21 @@
+name: Feature idea
+description: Something smart-doctor should check or do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The login problem you're trying to solve
+      description: What fails, and what would have helped you find out why.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What smart-doctor could do
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to work on this myself.

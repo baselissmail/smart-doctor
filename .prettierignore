@@ -1,0 +1,8 @@
+node_modules
+dist
+screenshots
+site/dist
+.smart-doctor
+package-lock.json
+CHANGELOG.md
+*.md

@@ -1,0 +1,13 @@
+{
+  "name": "smart-doctor",
+  "owner": {
+    "name": "Basel Issmail"
+  },
+  "plugins": [
+    {
+      "name": "smart-doctor",
+      "source": "./",
+      "description": "Diagnose failing SMART on FHIR logins \u2014 backend services and user sign-in \u2014 without exposing keys, secrets or tokens."
+    }
+  ]
+}

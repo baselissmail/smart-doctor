@@ -1,0 +1,12 @@
+{
+  "name": "smart-doctor",
+  "version": "0.2.0",
+  "description": "Diagnose failing SMART on FHIR logins — backend services and user sign-in — without exposing keys, secrets or tokens.",
+  "author": {
+    "name": "Basel Issmail"
+  },
+  "license": "MIT",
+  "keywords": ["fhir", "smart-on-fhir", "ehr", "oauth2", "healthcare"],
+  "homepage": "https://baselissmail.github.io/smart-doctor/",
+  "repository": "https://github.com/baselissmail/smart-doctor"
+}

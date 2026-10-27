@@ -1,0 +1,36 @@
+name: Vendor quirk
+description: An EHR behaves in a way smart-doctor should know about.
+labels: [knowledge, vendor]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Vendor hints must come from a **public** source: vendor documentation, a public forum thread, or behaviour anyone can reproduce on a public sandbox.
+        Never share information obtained under an NDA, a vendor agreement, or from a customer's private environment.
+  - type: input
+    id: vendor
+    attributes:
+      label: Vendor and environment
+      placeholder: Epic public sandbox (fhir.epic.com)
+    validations:
+      required: true
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: What the server does
+      description: The request (masked) and the exact error response.
+    validations:
+      required: true
+  - type: textarea
+    id: meaning
+    attributes:
+      label: What it actually means, and the fix
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public source
+      description: A link, or how anyone can reproduce it on a public sandbox.
+    validations:
+      required: true

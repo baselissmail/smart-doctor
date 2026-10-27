@@ -1,0 +1,47 @@
+name: smart-doctor
+description: Check that a SMART on FHIR backend-services login still works (catch expiring keys, JWKS outages and registration drift before production does).
+branding:
+  icon: activity
+  color: green
+inputs:
+  profile:
+    description: Profile name from smart-doctor.yaml
+    required: true
+  config:
+    description: 'Path to smart-doctor.yaml (default: nearest one in the repo)'
+    required: false
+    default: ''
+  args:
+    description: Extra arguments, e.g. "--vendor epic"
+    required: false
+    default: ''
+outputs:
+  verdict:
+    description: ok | warn | fail | offline
+    value: ${{ steps.run.outputs.verdict }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Install smart-doctor
+      shell: bash
+      run: npm ci --omit=dev --prefix "$GITHUB_ACTION_PATH" --silent
+    - id: run
+      name: Run smart-doctor
+      shell: bash
+      env:
+        SD_PROFILE: ${{ inputs.profile }}
+        SD_CONFIG: ${{ inputs.config }}
+        SD_ARGS: ${{ inputs.args }}
+      run: |
+        set +e
+        CFG=()
+        [ -n "$SD_CONFIG" ] && CFG=(--config "$SD_CONFIG")
+        node "$GITHUB_ACTION_PATH/bin/smart-doctor.js" check "$SD_PROFILE" "${CFG[@]}" $SD_ARGS --report > sd-report.md
+        CODE=$?
+        cat sd-report.md >> "$GITHUB_STEP_SUMMARY"
+        VERDICT=$(grep -o 'Verdict:\*\* [a-z]*' sd-report.md | awk '{print $2}')
+        echo "verdict=${VERDICT:-fail}" >> "$GITHUB_OUTPUT"
+        exit $CODE

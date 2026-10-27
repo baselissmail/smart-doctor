@@ -1,0 +1,7 @@
+node_modules
+dist
+screenshots
+.smart-doctor
+.git
+*.pem
+*.key

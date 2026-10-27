@@ -1,0 +1,42 @@
+name: Bug
+description: smart-doctor crashed, hung, or behaved differently from the docs.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: '**Never paste keys, client secrets, tokens, authorization codes or patient data.** Use `--report` output where you can.'
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Ideally against the practice EHR (`smart-doctor mock`) so anyone can reproduce it.
+      placeholder: |
+        1. smart-doctor mock --mode clock-skew
+        2. smart-doctor check demo-backend
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: smart-doctor version
+      description: Output of `smart-doctor --version`
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you run it
+      options: [npm / npx, Standalone binary, Docker, GitHub Action, From source]
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and Node.js version
+      placeholder: macOS 15, Node 24.1

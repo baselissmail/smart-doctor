@@ -1,0 +1,36 @@
+name: Wrong or missing diagnosis
+description: smart-doctor ranked the wrong cause first, or had nothing useful to say.
+labels: [diagnosis, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful report you can send: every real-world message teaches smart-doctor something.
+        **Never paste keys, client secrets, tokens, authorization codes or patient data.** `--report` output is masked and safe to share.
+  - type: textarea
+    id: report
+    attributes:
+      label: smart-doctor report
+      description: Run the same command with `--report` and paste the output.
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: actual-cause
+    attributes:
+      label: What the real cause turned out to be
+      description: If you found it — what did you change to make the login work?
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server / vendor
+      description: e.g. "Epic public sandbox", "Oracle Health code console", "self-hosted OpenEMR 7.0.3". No customer names.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Before you submit
+      options:
+        - label: I removed anything secret and anything that identifies a customer or organisation.
+          required: true

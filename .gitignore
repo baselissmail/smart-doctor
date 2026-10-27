@@ -1,0 +1,19 @@
+node_modules/
+coverage/
+.DS_Store
+*.log
+
+# Never commit keys or local credentials
+*.pem
+*.key
+*.p8
+private*.json
+*-private.jwk.json
+.smart-doctor/
+.env
+.env.*
+!.env.example
+screenshots/
+src/ui/fonts.generated.js
+dist/
+site/dist/
