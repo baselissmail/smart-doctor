@@ -18,6 +18,7 @@ import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { decodeJwt, decodeProtectedHeader, importJWK, jwtVerify, generateKeyPair, exportJWK, SignJWT } from 'jose';
+import { listen } from '../util.js';
 
 export const MODES = {
   'no-discovery': 'No .well-known/smart-configuration (404); token URL only in CapabilityStatement',
@@ -225,6 +226,7 @@ export async function startMock(opts = {}) {
     return granted;
   }
 
+  /** @param {{ client: MockClient, scope: string[], patient?: string, user?: string }} o */
   async function issueTokens({ client, scope, patient, user = 'synthetic-practitioner-1' }) {
     const now = serverNow();
     const accessToken = randomBytes(24).toString('base64url');
@@ -257,6 +259,7 @@ export async function startMock(opts = {}) {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, base);
     const send = (status, body, headers = {}) => {
+      /** @type {Record<string, string>} */
       const h = { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers };
       if (modes.has('clock-skew')) h.date = new Date(serverNow() * 1000).toUTCString();
       if (modes.has('cached-discovery') && req.method === 'GET' && /\/(\.well-known\/|metadata$)/.test(url.pathname)) {
@@ -523,9 +526,8 @@ export async function startMock(opts = {}) {
     return code;
   }
 
-  await new Promise((resolve) => server.listen(opts.port ?? 0, opts.host || '127.0.0.1', resolve));
-  const addr = server.address();
-  base = `http://${opts.host && opts.host !== '0.0.0.0' ? opts.host : '127.0.0.1'}:${addr.port}`;
+  const port = await listen(server, opts.port ?? 0, opts.host || '127.0.0.1');
+  base = `http://${opts.host && opts.host !== '0.0.0.0' ? opts.host : '127.0.0.1'}:${port}`;
 
   // Snapshot JWKS now for stale-jwks mode
   if (modes.has('stale-jwks')) {
@@ -542,7 +544,7 @@ export async function startMock(opts = {}) {
   return {
     ...urls(),
     baseUrl: base,
-    port: addr.port,
+    port,
     jwksUrlFor: (clientId) => `${base}/client-jwks/${encodeURIComponent(clientId)}.json`,
     setClient: (c) => clients.set(c.clientId, normalise(c)),
     close: () =>

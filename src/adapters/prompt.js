@@ -3,10 +3,15 @@
 
 import readline from 'node:readline/promises';
 
+/**
+ * @param {{ input?: NodeJS.ReadStream | NodeJS.ReadableStream, output?: NodeJS.WritableStream }} [opts]
+ * @returns {import('../types.js').PromptAdapter}
+ */
 export function terminalPrompter({ input = process.stdin, output = process.stdout } = {}) {
   let rl;
-  const get = () => (rl ||= readline.createInterface({ input, output, terminal: Boolean(input.isTTY) }));
+  const get = () => (rl ||= readline.createInterface({ input, output, terminal: Boolean(/** @type {NodeJS.ReadStream} */ (input).isTTY) }));
   return {
+    /** @param {string} question @param {{ defaultValue?: string }} [o] */
     async ask(question, { defaultValue } = {}) {
       const suffix = defaultValue ? ` (${defaultValue})` : '';
       const answer = (await get().question(`${question}${suffix}: `)).trim();
@@ -24,6 +29,7 @@ export function scriptedPrompter(answers = []) {
   const queue = [...answers];
   return {
     asked: [],
+    /** @param {string} question @param {{ defaultValue?: string }} [o] */
     async ask(question, { defaultValue } = {}) {
       this.asked.push(question);
       const next = queue.shift();

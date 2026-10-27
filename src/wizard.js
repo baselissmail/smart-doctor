@@ -29,6 +29,9 @@ export async function choose(prompter, out, question, options, defaultIndex = 0)
  * @param {{ prompter: { ask(q: string, o?: object): Promise<string> }, out: (s: string) => void, configPath?: string, cwd?: string, env?: object }} io
  * @returns {Promise<{ name: string, path: string, profile: object, runNow: boolean }>}
  */
+/**
+ * @param {{ prompter: import('./types.js').PromptAdapter, out: (line: string) => void, configPath?: string, cwd?: string, env?: NodeJS.ProcessEnv }} o
+ */
 export async function runWizard({ prompter, out, configPath, cwd = process.cwd(), env = process.env }) {
   const target = configPath || findConfig({ cwd, env }).path;
   out('smart-doctor setup — a few questions, then everything else is discovered for you.');

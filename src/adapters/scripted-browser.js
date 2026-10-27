@@ -3,6 +3,7 @@
 // request (loopback) or remembers the URL so a scripted prompter can paste it.
 // Used by the demo and the tests; never by real runs.
 
+/** @param {{ redirectUri?: string, decision?: string, patient?: string, deliver?: boolean }} [opts]  decision: 'approve' or 'deny' */
 export function fakeBrowser({ redirectUri, decision = 'approve', patient, deliver = true } = {}) {
   let resolveLanded;
   const landed = new Promise((r) => (resolveLanded = r));

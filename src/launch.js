@@ -131,13 +131,9 @@ export function checkRedirectUri(redirectUri, mode) {
 }
 
 /**
- * @param {{
- *   fhirBase: string, clientId: string, redirectUri: string, redirectMode?: 'auto'|'loopback'|'paste',
- *   scope?: string, auth?: string, secret?: string, secretEnv?: string,
- *   keyPath?: string, keyText?: string, kid?: string, alg?: string,
- *   vendor?: string, timeoutMs?: number, waitMs?: number, testRefresh?: boolean, probe?: boolean,
- * }} opts
- * @param {{ run?: Run, browser: { open(url: string): Promise<void> }, prompter?: { ask(q: string): Promise<string> }, signal?: AbortSignal }} ctx
+ * SMART App Launch check (authorization_code + PKCE). Needs fhirBase, clientId and redirectUri.
+ * @param {import('./types.js').RunOptions} opts
+ * @param {import('./types.js').RunContext} [ctx]  browser is required; prompter for paste-back
  */
 export async function runLaunch(opts, ctx = {}) {
   if (!opts.fhirBase) throw new UsageError('--fhir <FHIR base URL> is required');
@@ -151,6 +147,11 @@ export async function runLaunch(opts, ctx = {}) {
   return withRun(run, () => launchFlow({ ...opts, auth }, run, ctx));
 }
 
+/**
+ * @param {import('./types.js').RunOptions} opts
+ * @param {import('./core/run.js').Run} run
+ * @param {import('./types.js').RunContext} ctx
+ */
 async function launchFlow(opts, run, { browser, prompter, signal }) {
   const mode = resolveRedirectMode(opts.redirectUri, opts.redirectMode);
   const scope = opts.scope || DEFAULT_LAUNCH_SCOPE;
@@ -281,7 +282,7 @@ async function launchFlow(opts, run, { browser, prompter, signal }) {
   let token;
   if (ready) {
     try {
-      token = await authorizeAndExchange({ opts, run, mode, scope, scopes, disc, key, loop, browser, prompter, meta, facts, signal });
+      token = await authorizeAndExchange({ opts, run, mode, scope, scopes, disc, key, loop, browser, prompter, facts, signal });
       if (disc.serverDate?.cached && token?.serverDate) run.amend('clock', checkClock(token.serverDate).check);
     } finally {
       loop?.close();

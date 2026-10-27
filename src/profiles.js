@@ -41,6 +41,7 @@ export function expandHome(p) {
 }
 
 /** Where profiles live: --config, $SMART_DOCTOR_CONFIG, nearest ./smart-doctor.yaml upward, or ~/.config/smart-doctor/. */
+/** @param {{ explicit?: string, cwd?: string, env?: NodeJS.ProcessEnv }} [opts] */
 export function findConfig({ explicit, cwd = process.cwd(), env = process.env } = {}) {
   if (explicit) return { path: path.resolve(cwd, expandHome(explicit)), exists: existsSync(path.resolve(cwd, expandHome(explicit))) };
   if (env.SMART_DOCTOR_CONFIG) {
@@ -119,6 +120,11 @@ export async function saveProfile(configPath, name, profile) {
  * Turn a profile (+ CLI overrides) into engine options. Relative key paths
  * resolve against the config file's folder, so a committed profile works
  * from any checkout.
+ */
+/**
+ * @param {Record<string, any>} [profile]
+ * @param {{ configPath?: string, env?: NodeJS.ProcessEnv }} [opts]
+ * @returns {import('./types.js').RunOptions & Record<string, any>}
  */
 export function profileToOptions(profile = {}, { configPath, env = process.env } = {}) {
   const baseDir = configPath ? path.dirname(configPath) : process.cwd();

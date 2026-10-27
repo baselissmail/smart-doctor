@@ -112,8 +112,8 @@ const launchScenarios = [
 ];
 for (const s of launchScenarios) {
   const port = 20000 + Math.floor(Math.random() * 20000);
-  const redirect = (s.redirect || REDIRECT).replace('{port}', port);
-  const registered = (s.registered || [redirect]).map((r) => r.replace('{port}', port));
+  const redirect = (s.redirect || REDIRECT).replace('{port}', String(port));
+  const registered = (s.registered || [redirect]).map((r) => r.replace('{port}', String(port)));
   let result;
   if (s.secret) {
     const mock = await startMock({ clients: [{ clientId: 'svc', secret: 'right' }] });

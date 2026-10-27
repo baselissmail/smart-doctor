@@ -25,6 +25,7 @@ import { loadProfiles, saveProfile, profileToOptions, validateProfile, ProfileEr
 import { DEFAULT_SECRET_ENV } from '../clientauth.js';
 import { VERSION } from '../version.js';
 import { PAGE_HTML, APP_CSS, APP_JS } from './assets.js';
+import { listen } from '../util.js';
 
 const require = createRequire(import.meta.url);
 const FONT_FILES = {
@@ -38,6 +39,7 @@ async function loadFont(name) {
   } catch {
     // Standalone binaries embed fonts at build time (scripts/build-assets.js)
     try {
+      // @ts-ignore -- only exists in standalone builds; keep the literal path so the bundler embeds it
       const m = await import('./fonts.generated.js');
       return m.FONTS?.[name] ? Buffer.from(m.FONTS[name], 'base64') : undefined;
     } catch {
@@ -47,10 +49,11 @@ async function loadFont(name) {
 }
 
 /**
- * @param {{ port?: number, configPath: string, demo?: boolean, log?: (s: string) => void, env?: object }} o
+ * @param {{ port?: number, configPath: string, demo?: boolean, log?: (s: string) => void, env?: NodeJS.ProcessEnv }} o
  */
 export async function startUi({ port = 0, configPath, demo = false, log = () => {}, env = process.env }) {
   const token = randomBytes(24).toString('hex');
+  let boundPort = 0; // set once listening; requests only arrive after that
   const runs = new Map();
   let demoState;
   if (demo) {
@@ -83,8 +86,7 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
 
     // DNS-rebinding defence
     const host = req.headers.host || '';
-    if (host !== `127.0.0.1:${server.address().port}` && host !== `localhost:${server.address().port}`)
-      return send(403, { error: 'Forbidden host' });
+    if (host !== `127.0.0.1:${boundPort}` && host !== `localhost:${boundPort}`) return send(403, { error: 'Forbidden host' });
 
     try {
       // ---- static ----
@@ -263,8 +265,8 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
     });
   }
 
-  await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${server.address().port}`;
+  boundPort = await listen(server, port, '127.0.0.1');
+  const base = `http://127.0.0.1:${boundPort}`;
   return {
     url: `${base}/?t=${token}`,
     baseUrl: base,

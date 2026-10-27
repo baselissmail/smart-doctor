@@ -19,7 +19,10 @@ export function isSecretAuth(auth) {
   return auth === 'client_secret_basic' || auth === 'client_secret_post';
 }
 
-/** Pick an auth method when the user didn't say. */
+/**
+ * Pick an auth method when the user didn't say.
+ * @param {{ auth?: string, keyPath?: string, keyText?: string, secret?: string }} opts
+ */
 export function inferAuth({ auth, keyPath, keyText, secret }) {
   if (auth) return auth;
   if (keyPath || keyText) return 'private_key_jwt';

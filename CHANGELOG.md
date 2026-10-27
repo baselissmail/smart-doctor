@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.2.0 — unreleased
+## Unreleased
+
+- **Type checking**: TypeScript checks the JSDoc types (`npm run typecheck`, in `npm run check` and CI). Shared option types in `src/types.js`.
+- Servers report a busy port as an error instead of crashing (shared `listen` helper).
+
+## 0.2.0 — 2026-10-28
 
 First public release.
 

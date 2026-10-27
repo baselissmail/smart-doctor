@@ -61,6 +61,7 @@ const confidential = { ...launch, client_type: 'confidential-symmetric', client_
 const asymmetric = { ...launch, client_type: 'confidential-asymmetric', jwks };
 const backend = { launch_type: 'backend-service', client_type: 'backend-service', client_id: 'sd-backend', jwks };
 
+/** @type {[name: string, server: Record<string, any>, options: Record<string, any>, expected: string][]} */
 const scenarios = [
   // name, server, smart-doctor options, expected: 'ok' or the top cause id
   ['Sign-in: public client', launch, { auth: 'none' }, 'ok'],

@@ -11,6 +11,8 @@ Where smart-doctor is heading. Items marked **help wanted** are good places to s
 
 ## Later
 
+- **Stricter type checking.** `npm run typecheck` passes today; the next steps are `strictNullChecks` (about 70 places need a typed result object rather than a code change) and then `noImplicitAny`. Good first contributions, one file at a time. *help wanted*
+
 - More vendor knowledge from public sandboxes and public documentation (MEDITECH, NextGen, Veradigm and others). *help wanted*
 - Saved run history in the local web view, to compare a failing run with the last good one.
 - Homebrew tap and winget/Scoop manifests for the standalone binaries.

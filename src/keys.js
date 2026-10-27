@@ -52,6 +52,7 @@ export function algMatchesKey(alg, keyObject) {
  * Parse key material from a string (PEM, JWK JSON, or JWKS JSON).
  * @returns {{ keyObject: import('node:crypto').KeyObject, jwkKid?: string, jwkAlg?: string, source: string }}
  */
+/** @param {string} text @param {{ kid?: string }} [opts] */
 export function parseKeyMaterial(text, { kid } = {}) {
   const trimmed = text.trim();
   if (trimmed.startsWith('-----BEGIN')) {
@@ -202,6 +203,7 @@ export async function loadKey(opts) {
  * Generate a fresh key pair + JWKS suitable for SMART backend services.
  * Writes <out>/private-key.pem and <out>/jwks.json (public only).
  */
+/** @param {{ alg?: 'RS384'|'ES384'|string, kid?: string, outDir?: string }} [opts] */
 export async function generateKeys({ alg = 'ES384', kid, outDir = '.' } = {}) {
   if (!SMART_REQUIRED_ALGS.includes(alg)) throw new Error('alg must be RS384 or ES384');
   const { privateKey, publicKey } = await generateKeyPair(alg, { extractable: true, modulusLength: 2048 });

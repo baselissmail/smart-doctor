@@ -14,12 +14,14 @@ smart-doctor diagnoses failing SMART on FHIR logins: backend services (`client_c
 - [ARCHITECTURE.md](ARCHITECTURE.md): the Run event stream, adapters, and why redirects work everywhere.
 - Engine: `src/doctor.js` (backend), `src/launch.js` (sign-in), `src/diagnose.js` (ranks causes).
 - Knowledge (data): `src/knowledge/causes.js`, `src/knowledge/errors.js`, `src/vendors/*.js`. Guarded by `test/knowledge.test.js`.
+- Types: JSDoc, checked by `tsc` (no `.ts` files, no build step). Shared shapes in `src/types.js`.
 - Front-ends: `src/cli.js`, `src/ui/`, the GitHub Action (`action.yml`). Website generator: `site/`.
 
 ## Commands
 
 ```bash
-npm run check            # lint + format check + tests (no network)
+npm run check            # lint + type check + format check + tests (no network)
+npm run typecheck        # TypeScript over the JSDoc types (src/types.js holds the shared shapes)
 npm test                 # tests only
 npm run demo             # 25 broken scenarios and their diagnoses
 npm run smoke:sandbox    # real-server check against launch.smarthealthit.org (needs internet)

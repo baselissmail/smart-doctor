@@ -4,6 +4,10 @@
 
 import { spawn } from 'node:child_process';
 
+/**
+ * @param {{ print?: (url: string) => void }} [opts]  print: show the URL too (the CLI prints it in case no browser opens)
+ * @returns {import('../types.js').BrowserAdapter}
+ */
 export function systemBrowser({ print = () => {} } = {}) {
   return {
     async open(url) {

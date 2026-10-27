@@ -211,6 +211,7 @@ async function cmdProfiles(args, out) {
 
 // ---------------------------------------------------------------- check / launch
 
+/** @type {import('node:util').ParseArgsConfig['options']} */
 const CHECK_OPTIONS = {
   flow: { type: 'string' },
   fhir: { type: 'string' },
@@ -243,9 +244,14 @@ const CHECK_OPTIONS = {
   'no-color': { type: 'boolean' },
 };
 
-/** Build engine options from (profile ⊕ env ⊕ flags). Exported for the UI and tests. */
+/**
+ * Build engine options from (profile ⊕ env ⊕ flags). Exported for the UI and tests.
+ * @param {{ profileName?: string, values?: Record<string, any>, env?: NodeJS.ProcessEnv, forced?: Partial<import('./types.js').RunOptions> }} p
+ * @returns {Promise<import('./types.js').RunOptions & Record<string, any>>}
+ */
 export async function resolveOptions({ profileName, values = {}, env = process.env, forced = {} }) {
   const cfg = findConfig({ explicit: values.config, env });
+  /** @type {Record<string, any>} */
   let base = {};
   if (profileName) {
     const { profiles } = await loadProfiles(cfg.path);
@@ -299,7 +305,9 @@ export async function resolveOptions({ profileName, values = {}, env = process.e
 async function cmdCheck(args, io, forced) {
   const out = (s) => io.stdout.write(s + '\n');
   const err = (s) => io.stderr.write(s + '\n');
-  const { values, positionals } = parseArgs({ args, options: CHECK_OPTIONS, allowPositionals: true, strict: true });
+  const parsed = parseArgs({ args, options: CHECK_OPTIONS, allowPositionals: true, strict: true });
+  const values = /** @type {Record<string, any>} */ (parsed.values);
+  const positionals = parsed.positionals;
   if (positionals.length > 1) throw new UsageError(`Expected at most one profile name, got: ${positionals.join(' ')}`);
   const opts = await resolveOptions({ profileName: positionals[0], values, forced });
 
@@ -501,7 +509,10 @@ export const DEMO = {
   redirects: ['http://localhost:9876/callback', 'http://127.0.0.1:9876/callback', 'https://app.example.com/smart/callback'],
 };
 
-/** Start the practice EHR with three demo apps. Shared by `mock` and `ui --demo`. */
+/**
+ * Start the practice EHR with three demo apps. Shared by `mock` and `ui --demo`.
+ * @param {{ port?: number, host?: string, modes?: string[], verboseErrors?: boolean, log?: (line: string) => void, keyDir?: string }} [opts]
+ */
 export async function startDemoMock({
   port = 4013,
   host = '127.0.0.1',

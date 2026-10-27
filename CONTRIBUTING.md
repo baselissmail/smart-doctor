@@ -11,7 +11,7 @@ You need Node.js 22 or newer.
 ```bash
 git clone https://github.com/baselissmail/smart-doctor.git && cd smart-doctor
 npm install
-npm run check        # lint + format check + all tests, no network needed
+npm run check        # lint + type check + format check + all tests, no network needed
 npm run demo         # 25 broken logins and what smart-doctor concludes
 npm run ui           # the local web view with the practice EHR
 ```
@@ -48,7 +48,9 @@ smart-doctor keeps its knowledge as data, so most changes don't touch the engine
 5. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) (`fix(diagnose): …`, `feat(vendors): …`, `docs: …`).
 6. Open a pull request; the template has a short checklist.
 
-Code style is enforced by Prettier and ESLint (`npm run format` fixes formatting). The code is plain JavaScript (ES modules) with JSDoc types, no build step, and very few dependencies — please keep it that way; a new runtime dependency needs a good reason.
+Code style is enforced by Prettier and ESLint (`npm run format` fixes formatting). The code is plain JavaScript (ES modules) with no build step and very few dependencies — please keep it that way; a new runtime dependency needs a good reason.
+
+Types are JSDoc comments, checked by TypeScript (`npm run typecheck`, also in CI). Shared shapes such as `RunOptions` live in [`src/types.js`](src/types.js); give new functions with option objects a `@param` type so editors can autocomplete them. Why JavaScript and not TypeScript files: what you read is exactly what runs (in the npm package, the binaries and the Action), and Node will not run `.ts` files from inside `node_modules`, so TypeScript sources would need a build step.
 
 ## Safety is a feature
 

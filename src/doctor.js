@@ -15,18 +15,9 @@ import { Run, withRun } from './core/run.js';
 import { inferAuth, checkSecret, clientAuthParams, AUTH_METHODS } from './clientauth.js';
 
 /**
- * @typedef {{
- *   fhirBase?: string, tokenUrl?: string, clientId: string,
- *   keyPath?: string, keyText?: string, kid?: string, alg?: string,
- *   jwksUrl?: string, jku?: boolean, scope?: string, aud?: string,
- *   vendor?: string, timeoutMs?: number, tokenRequest?: boolean, probePath?: string,
- *   auth?: 'private_key_jwt'|'client_secret_basic'|'client_secret_post', secret?: string, secretEnv?: string,
- * }} CheckOptions
- */
-
-/**
- * @param {CheckOptions} opts
- * @param {{ run?: Run }} [ctx]
+ * Backend-services check (client_credentials).
+ * @param {import('./types.js').RunOptions} opts
+ * @param {import('./types.js').RunContext} [ctx]
  */
 export async function runCheck(opts, ctx = {}) {
   if (!opts.clientId) throw new UsageError('--client-id is required');

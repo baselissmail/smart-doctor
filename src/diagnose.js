@@ -13,7 +13,7 @@ import { TEXT_PATTERNS, normalizeError } from './knowledge/errors.js';
  * @typedef {{ id: string, title: string, why: string, fix: string, confidence: number, evidence?: string }} Cause
  * @typedef {{
  *   checks: import('./util.js').Check[],
- *   token?: { status?: number, error?: string, errorDescription?: string, networkError?: string, token?: any, rawSnippet?: string },
+ *   token?: { status?: number, error?: string, errorDescription?: string, networkError?: string, token?: any, rawSnippet?: string, retryAfter?: string },
  *   vendor?: import('./vendors/index.js').VendorProfile,
  *   config?: any,
  *   alg?: string,
@@ -21,6 +21,10 @@ import { TEXT_PATTERNS, normalizeError } from './knowledge/errors.js';
  *   jwksUrl?: string,
  *   tokenUrlOverride?: string,
  *   discoveredTokenUrl?: string,
+ *   flow?: 'backend'|'launch',
+ *   auth?: string,
+ *   redirectMode?: string,
+ *   launch?: Record<string, any>,
  * }} Facts
  */
 
@@ -295,6 +299,7 @@ export function scopeSyntax(scope) {
  * Diagnose from an error message alone (the `explain` command).
  * Accepts the raw JSON body or any text a server/vendor log printed.
  */
+/** @param {string} text @param {{ vendor?: import('./vendors/index.js').VendorProfile, status?: number }} [opts] */
 export function explainError(text, { vendor, status } = {}) {
   let json;
   try {

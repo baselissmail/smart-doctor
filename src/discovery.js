@@ -7,7 +7,7 @@ import { serverDateFrom } from './clock.js';
 const OAUTH_URIS_EXT = 'http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris';
 
 /**
- * @param {{ fhirBase: string, timeoutMs?: number }} opts
+ * @param {{ fhirBase: string, timeoutMs?: number, auth?: string, grant?: 'client_credentials'|'authorization_code' }} opts
  */
 export async function discover({ fhirBase, timeoutMs, auth = 'private_key_jwt', grant = 'client_credentials' }) {
   const checks = [];

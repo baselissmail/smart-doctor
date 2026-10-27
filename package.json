@@ -1,7 +1,7 @@
 {
   "name": "smart-doctor",
   "version": "0.2.0",
-  "description": "Find out why a SMART on FHIR login fails — backend services or user sign-in — locally, without your keys or secrets ever leaving your machine.",
+  "description": "Find out why a SMART on FHIR login fails \u2014 backend services or user sign-in \u2014 locally, without your keys or secrets ever leaving your machine.",
   "keywords": [
     "fhir",
     "smart-on-fhir",
@@ -50,9 +50,10 @@
   "scripts": {
     "test": "node --test",
     "lint": "eslint .",
+    "typecheck": "tsc -p .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run format:check && npm test",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
     "mock": "node bin/smart-doctor.js mock",
     "demo": "node scripts/demo.js",
     "ui": "node bin/smart-doctor.js ui --demo",
@@ -74,8 +75,10 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
     "eslint": "10.13.0",
     "globals": "17.13.0",
-    "prettier": "3.9.10"
+    "prettier": "3.9.10",
+    "typescript": "7.0.2"
   }
 }

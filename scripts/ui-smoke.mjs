@@ -42,7 +42,9 @@ async function session(opts, fn) {
   }
 }
 const finished = (page) =>
-  page.waitForFunction(() => document.querySelector('#verdict').dataset.v, null, { timeout: 20000 }).then(() => page.waitForTimeout(800));
+  page
+    .waitForFunction(() => /** @type {HTMLElement} */ (document.querySelector('#verdict')).dataset.v, null, { timeout: 20000 })
+    .then(() => page.waitForTimeout(800));
 async function runProfile(page, name) {
   await page.selectOption('#profile', name);
   await page.click('#run');

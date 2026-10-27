@@ -14,7 +14,7 @@ export const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-typ
  *
  * @param {{ tokenUrl: string, grantType?: string, clientAuth?: { headers: object, params: object },
  *   assertion?: string, form?: Record<string,string>, scope?: string, timeoutMs?: number,
- *   extraParams?: Record<string,string>, label?: string }} o
+ *   extraParams?: Record<string,string>, label?: string, sendScope?: boolean }} o
  */
 export async function requestToken(o) {
   const auth = o.clientAuth || { headers: {}, params: { client_assertion_type: CLIENT_ASSERTION_TYPE, client_assertion: o.assertion } };

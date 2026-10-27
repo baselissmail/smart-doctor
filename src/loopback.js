@@ -3,6 +3,7 @@
 // back with ?code=…&state=… (or ?error=…).
 
 import http from 'node:http';
+import { listen } from './util.js';
 
 export function isLoopbackUrl(raw) {
   try {
@@ -49,10 +50,7 @@ export async function startLoopback(redirectUri, { waitMs = 300000 } = {}) {
   for (const host of hosts) {
     const server = http.createServer(handler);
     try {
-      await new Promise((resolve, reject) => {
-        server.once('error', reject);
-        server.listen(port, host, resolve);
-      });
+      await listen(server, port, host);
       servers.push(server);
     } catch (e) {
       // IPv6 may be unavailable: only fail if we could not bind anything.

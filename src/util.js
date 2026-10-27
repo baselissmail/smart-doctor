@@ -95,6 +95,7 @@ function pickHeaders(h = {}) {
   return redactHeaders(out);
 }
 
+/** @param {string} url @param {{ method?: string, headers?: Record<string, string>, body?: string, timeoutMs?: number }} [opts] */
 async function rawRequest(url, { method = 'GET', headers = {}, body, timeoutMs = 15000 } = {}) {
   const started = Date.now();
   const controller = new AbortController();
@@ -157,4 +158,22 @@ export function describeNetworkError(err, timeoutMs) {
 
 export function nowSeconds() {
   return Math.floor(Date.now() / 1000);
+}
+
+/**
+ * Start an HTTP server and resolve with the port it got (0 = any free port).
+ * Rejects (instead of crashing the process) when the port is taken.
+ * @param {import('node:http').Server} server
+ * @param {number} port
+ * @param {string} host
+ * @returns {Promise<number>}
+ */
+export function listen(server, port, host) {
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      server.off('error', reject);
+      resolve(/** @type {import('node:net').AddressInfo} */ (server.address()).port);
+    });
+  });
 }
