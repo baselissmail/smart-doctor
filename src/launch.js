@@ -24,6 +24,7 @@ import { Run, withRun } from './core/run.js';
 import { inferAuth, checkSecret, clientAuthParams, AUTH_METHODS } from './clientauth.js';
 import { isLoopbackUrl, startLoopback, LoopbackError } from './loopback.js';
 import { finish, UsageError } from './doctor.js';
+import { redactText } from './core/redact.js';
 
 export const DEFAULT_LAUNCH_SCOPE = 'launch/patient openid fhirUser offline_access patient/*.rs';
 
@@ -589,31 +590,51 @@ async function checkIdToken(idToken, { clientId, disc, opts, scopes, facts }) {
   }
   const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   if (!aud.includes(clientId)) {
-    facts.launch.idTokenProblem = 'aud';
+    facts.launch.idTokenProblem ||= 'aud';
     checks.push(check('context.id_token_aud', 'id_token aud is your client_id', STATUS.FAIL, `aud ${JSON.stringify(claims.aud)}`));
   }
-  // Verify the signature against the server's jwks_uri when advertised.
+  // Verify the signature against the server's jwks_uri when advertised. aud is checked above, so it is
+  // not repeated here; an expired token or an unreadable JWKS is reported as what it is, not as a bad signature.
   const jwksUri = disc.config?.jwks_uri;
+  const problem = (kind) => (facts.launch.idTokenProblem ||= kind);
   if (jwksUri) {
     const res = await httpRequest(jwksUri, {
       headers: { accept: 'application/json' },
       timeoutMs: opts.timeoutMs,
       label: 'server JWKS (id_token)',
     });
-    try {
-      await jwtVerify(idToken, createLocalJWKSet(res.json), { audience: clientId, clockTolerance: 60 });
-      checks.push(check('context.id_token', 'id_token signature valid', STATUS.PASS, `iss ${claims.iss}`));
-    } catch (e) {
-      facts.launch.idTokenProblem = 'signature';
+    if (res.networkError || !res.ok || !Array.isArray(res.json?.keys)) {
+      problem(`server JWKS unreadable (${res.networkError || `HTTP ${res.status}`})`);
       checks.push(
         check(
           'context.id_token',
-          'id_token signature valid',
-          STATUS.FAIL,
-          `${e.code || e.message}`,
-          'The id_token does not verify against the server’s jwks_uri.',
+          'id_token signature checked',
+          STATUS.WARN,
+          `Could not read the server's JWKS (${res.networkError || `HTTP ${res.status}${res.ok ? ', no "keys" array' : ''}`}), so the signature was not verified.`,
+          'Check the jwks_uri in the server’s SMART configuration; apps verify id_tokens against it.',
         ),
       );
+    } else {
+      try {
+        await jwtVerify(idToken, createLocalJWKSet(res.json), { clockTolerance: 60 });
+        checks.push(check('context.id_token', 'id_token signature valid', STATUS.PASS, `iss ${claims.iss}`));
+      } catch (e) {
+        const code = e?.code || '';
+        const [kind, title, fix] =
+          code === 'ERR_JWT_EXPIRED'
+            ? [
+                'expired',
+                'id_token not expired',
+                'The id_token was already expired when it arrived: check the server clock and the token lifetime.',
+              ]
+            : code === 'ERR_JWT_CLAIM_VALIDATION_FAILED'
+              ? ['claims', 'id_token claims valid', 'A time-based claim (iat/nbf) is not valid yet: check both clocks.']
+              : code === 'ERR_JWKS_NO_MATCHING_KEY' || code === 'ERR_JWKS_MULTIPLE_MATCHING_KEYS'
+                ? ['key', 'id_token signing key published', 'The server’s jwks_uri has no key matching the id_token’s kid and alg.']
+                : ['signature', 'id_token signature valid', 'The id_token does not verify against the server’s jwks_uri.'];
+        problem(kind);
+        checks.push(check('context.id_token', title, STATUS.FAIL, code || String(e?.message || e), fix));
+      }
     }
   } else {
     checks.push(
@@ -668,6 +689,6 @@ export function parseCallback(text, redirectUri) {
     state: params.get('state') || undefined,
     iss: params.get('iss') || undefined,
     error: params.get('error') || undefined,
-    errorDescription: params.get('error_description') || undefined,
+    errorDescription: redactText(params.get('error_description') || undefined),
   };
 }

@@ -218,6 +218,19 @@ test('no patient context → missing_patient', async () => {
   assert.ok(ids(r).includes('missing_patient'));
 });
 
+test('id_token for another audience → aud fails once, signature still verifies', async () => {
+  const { r } = await launch({ modes: ['id-token-wrong-aud'], opts: { scope: 'openid fhirUser launch/patient patient/*.rs' } });
+  assert.equal(status(r, 'context.id_token_aud'), 'fail');
+  assert.equal(status(r, 'context.id_token'), 'pass', 'a wrong aud is not a bad signature');
+  assert.equal(r.diagnosis.causes.find((c) => c.id === 'id_token_problem')?.evidence, 'aud');
+});
+
+test('server JWKS down → id_token reported as unverifiable, not as a bad signature', async () => {
+  const { r } = await launch({ modes: ['server-jwks-down'], opts: { scope: 'openid fhirUser launch/patient patient/*.rs' } });
+  assert.equal(status(r, 'context.id_token'), 'warn');
+  assert.match(r.diagnosis.causes.find((c) => c.id === 'id_token_problem')?.evidence || '', /server JWKS unreadable \(HTTP 500\)/);
+});
+
 test('no refresh tokens → refresh_problem warning, tokens still work', async () => {
   const { r } = await launch({ modes: ['refresh-disabled'] });
   assert.equal(status(r, 'context.refresh_token'), 'warn');

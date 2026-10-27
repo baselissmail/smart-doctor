@@ -17,7 +17,7 @@ import { detectVendor, VENDORS } from './vendors/index.js';
 import { generateKeys } from './keys.js';
 import { startMock, MODES } from './mock/server.js';
 import { STATUS, mask } from './util.js';
-import { DEFAULT_SECRET_ENV } from './clientauth.js';
+import { DEFAULT_SECRET_ENV, isEnvVarName } from './clientauth.js';
 import { findConfig, loadProfiles, profileToOptions, saveProfile, ProfileError } from './profiles.js';
 import { runWizard } from './wizard.js';
 import { systemBrowser } from './adapters/browser.js';
@@ -245,6 +245,20 @@ const CHECK_OPTIONS = {
 };
 
 /**
+ * Parse a whole-number option. A typo such as "30s" is a usage error rather than a NaN timer
+ * that fires at once and looks like a network failure.
+ * @param {string} flag
+ * @param {unknown} value
+ * @param {number} [min]
+ */
+function wholeNumber(flag, value, min = 0) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min)
+    throw new UsageError(`--${flag} must be a whole number${min ? ` of at least ${min}` : ''} (got "${value}").`);
+  return n;
+}
+
+/**
  * Build engine options from (profile ⊕ env ⊕ flags). Exported for the UI and tests.
  * @param {{ profileName?: string, values?: Record<string, any>, env?: NodeJS.ProcessEnv, forced?: Partial<import('./types.js').RunOptions> }} p
  * @returns {Promise<import('./types.js').RunOptions & Record<string, any>>}
@@ -263,6 +277,8 @@ export async function resolveOptions({ profileName, values = {}, env = process.e
     }
     base = profileToOptions(profiles[profileName], { configPath: cfg.path, env });
   }
+  if (values['client-secret-env'] !== undefined && !isEnvVarName(values['client-secret-env']))
+    throw new UsageError('--client-secret-env takes the NAME of an environment variable (like MY_APP_SECRET), not the secret itself.');
   const secretEnv = values['client-secret-env'] || base.secretEnv || DEFAULT_SECRET_ENV;
   // Precedence: command-line flag > profile > environment variable.
   const pick = (flag, envName, fromProfile) => values[flag] ?? fromProfile ?? (envName ? env[envName] : undefined);
@@ -289,8 +305,8 @@ export async function resolveOptions({ profileName, values = {}, env = process.e
     secretEnv,
     secret: env[secretEnv],
     tokenRequest: !values.offline,
-    timeoutMs: values.timeout ? Number(values.timeout) : base.timeoutMs || 15000,
-    waitMs: values.wait ? Number(values.wait) * 1000 : 300000,
+    timeoutMs: values.timeout !== undefined ? wholeNumber('timeout', values.timeout, 1) : base.timeoutMs || 15000,
+    waitMs: values.wait !== undefined ? wholeNumber('wait', values.wait, 1) * 1000 : 300000,
     testRefresh: !values['no-refresh'],
     configPath: cfg.path,
   };
@@ -474,7 +490,7 @@ async function cmdExplain(args, out, stdin) {
   const text = await readInput(positionals.join(' ') || undefined, stdin);
   if (!text) throw new UsageError('Nothing to explain.');
   const vendor = detectVendor([values.url], values.vendor);
-  const d = explainError(text, { vendor, status: values.status ? Number(values.status) : undefined });
+  const d = explainError(text, { vendor, status: values.status !== undefined ? wholeNumber('status', values.status, 100) : undefined });
   if (values.json) {
     out(JSON.stringify(d.causes, null, 2));
     return 0;
@@ -585,7 +601,7 @@ async function cmdMock(args, out) {
     .map((s) => s.trim())
     .filter(Boolean);
   const { mock, profiles } = await startDemoMock({
-    port: Number(values.port),
+    port: wholeNumber('port', values.port),
     host: values.host,
     modes,
     verboseErrors: values['verbose-errors'],
@@ -635,7 +651,7 @@ async function cmdUi(args, out) {
   });
   const { startUi } = await import('./ui/server.js');
   const ui = await startUi({
-    port: Number(values.port),
+    port: wholeNumber('port', values.port),
     configPath: findConfig({ explicit: values.config }).path,
     demo: values.demo,
     log: out,

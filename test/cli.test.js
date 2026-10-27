@@ -24,6 +24,17 @@ test('help and version', async () => {
   assert.equal((await run(['bogus'])).code, 2);
 });
 
+test('check: number options and the secret variable name are validated', async () => {
+  const base = ['check', '--fhir', 'http://127.0.0.1:9/fhir', '--client-id', 'c', '--auth', 'client_secret_basic'];
+  const t = await run([...base, '--timeout', '30s']);
+  assert.equal(t.code, 2);
+  assert.match(t.stderr, /--timeout must be a whole number/);
+  const leaked = 'Sup3r-secret-value!';
+  const s = await run([...base, '--client-secret-env', leaked]);
+  assert.equal(s.code, 2);
+  assert.ok(!(s.stdout + s.stderr).includes(leaked), 'a secret passed by mistake must not be echoed');
+});
+
 test('check: usage errors exit 2', async () => {
   assert.equal((await run(['check', '--fhir', 'http://x'])).code, 2);
   assert.equal((await run(['check', '--fhir', 'http://x', '--client-id', 'c', '--key', '/nope.pem'])).code, 2);

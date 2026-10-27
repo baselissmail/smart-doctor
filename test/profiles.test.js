@@ -166,6 +166,39 @@ test('wizard: secret auth stores the env var NAME only and re-asks bad URLs', as
   }
 });
 
+test('wizard: an existing key is saved relative to the profile file, not the current folder', async () => {
+  const cwd = await tmp();
+  const configDir = await tmp();
+  const file = path.join(configDir, 'smart-doctor.yaml');
+  const key = await makeKey();
+  const typed = path.relative(cwd, key.pemPath); // what a user types, relative to where they are
+  const mock = await startMock({ clients: [] });
+  try {
+    const prompter = scriptedPrompter(['1', mock.fhirBase, 'svc', '', typed, '', '', '', 'svc', 'n']);
+    await runWizard({ prompter, out: () => {}, configPath: file, cwd });
+    const { profiles } = await loadProfiles(file);
+    assert.equal(profileToOptions(profiles.svc, { configPath: file }).keyPath, key.pemPath);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('wizard: a secret typed where the variable NAME belongs is refused and never echoed', async () => {
+  const dir = await tmp();
+  const file = path.join(dir, 'smart-doctor.yaml');
+  const mock = await startMock({ clients: [] });
+  const lines = [];
+  try {
+    const leaked = 'hunter2-not-a-name!';
+    const prompter = scriptedPrompter(['1', mock.fhirBase, 'svc', '2', leaked, 'SVC_SECRET', '', 'svc', 'n']);
+    const r = await runWizard({ prompter, out: (s) => lines.push(s), configPath: file, cwd: dir });
+    assert.equal(r.profile.secretEnv, 'SVC_SECRET');
+    assert.ok(!lines.join('\n').includes(leaked), 'the mistyped secret must not be printed');
+  } finally {
+    await mock.close();
+  }
+});
+
 test('CLI: demo profiles run by name (private key and client secret)', async () => {
   const dir = await tmp();
   const file = path.join(dir, 'smart-doctor.yaml');

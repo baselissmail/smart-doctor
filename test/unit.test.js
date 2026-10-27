@@ -9,6 +9,10 @@ import { explainError, scopeSyntax, diagnose, normalizeError } from '../src/diag
 import { detectVendor } from '../src/vendors/index.js';
 import { tokenUrlFromCapabilityStatement } from '../src/discovery.js';
 import { mask, redactId } from '../src/util.js';
+import { checkSecret, clientAuthParams } from '../src/clientauth.js';
+import { requestToken } from '../src/token.js';
+import { listen } from '../src/util.js';
+import http from 'node:http';
 import { scopeAllowed } from '../src/mock/server.js';
 import { makeKey } from './helpers.js';
 
@@ -249,6 +253,41 @@ test('vendor hints are limited to the flow and auth method they apply to', () =>
   );
   assert.ok(backendIds.includes('epic.key_propagation'));
   assert.ok(!backendIds.includes('epic.redirect_token'));
+});
+
+test('server error text that echoes our secrets is masked before it reaches checks and reports', async () => {
+  const code = 'auth-code-1234567890';
+  const secret = 'client-secret-0987654321';
+  const jwt = 'eyJhbGciOiJFUzM4NCJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl';
+  const server = http.createServer((req, res) => {
+    res.writeHead(400, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'invalid_grant', error_description: `code ${code} with secret ${secret} and ${jwt} rejected` }));
+  });
+  const port = await listen(server, 0, '127.0.0.1');
+  try {
+    const clientAuth = clientAuthParams({ auth: 'client_secret_basic', clientId: 'my-app', secret });
+    const r = await requestToken({
+      tokenUrl: `http://127.0.0.1:${port}/token`,
+      grantType: 'authorization_code',
+      form: { code },
+      clientAuth,
+    });
+    const shown = JSON.stringify({ d: r.errorDescription, checks: r.checks });
+    for (const s of [code, secret, jwt]) assert.ok(!shown.includes(s), `${s.slice(0, 8)}… leaked`);
+    assert.match(r.errorDescription || '', /rejected/);
+  } finally {
+    server.close();
+  }
+});
+
+test('checkSecret never prints something that is not a variable name', () => {
+  const leaked = 'Sup3r-secret-value!';
+  const out = JSON.stringify(checkSecret({ secret: undefined, secretEnv: leaked, auth: 'client_secret_basic' }));
+  assert.ok(!out.includes(leaked));
+  assert.match(
+    JSON.stringify(checkSecret({ secret: undefined, secretEnv: 'MY_APP_SECRET', auth: 'client_secret_basic' })),
+    /MY_APP_SECRET/,
+  );
 });
 
 // ---------- explain ----------

@@ -9,6 +9,7 @@ import path from 'node:path';
 import os from 'node:os';
 import YAML from 'yaml';
 import { DEFAULT_SECRET_ENV } from './clientauth.js';
+import { isEnvVarName } from './clientauth.js';
 
 export const CONFIG_NAME = 'smart-doctor.yaml';
 
@@ -74,8 +75,10 @@ export function validateProfile(name, p) {
     if (!ALLOWED.has(k)) throw new ProfileError(`Profile "${name}": unknown setting "${k}". Allowed: ${[...ALLOWED].join(', ')}.`);
   }
   if (p.flow && !['backend', 'launch'].includes(p.flow)) throw new ProfileError(`Profile "${name}": flow must be "backend" or "launch".`);
-  if (p.secretEnv && !/^[A-Z_][A-Z0-9_]*$/.test(p.secretEnv))
+  if (p.secretEnv && !isEnvVarName(p.secretEnv))
     throw new ProfileError(`Profile "${name}": secretEnv must be an environment variable NAME (like MY_APP_SECRET), not a secret.`);
+  if (p.timeout !== undefined && !(Number.isInteger(Number(p.timeout)) && Number(p.timeout) > 0))
+    throw new ProfileError(`Profile "${name}": timeout must be a whole number of milliseconds.`);
   return p;
 }
 

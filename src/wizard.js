@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs';
 import { discover } from './discovery.js';
 import { detectVendor } from './vendors/index.js';
 import { loadKey, generateKeys } from './keys.js';
-import { DEFAULT_SECRET_ENV } from './clientauth.js';
+import { DEFAULT_SECRET_ENV, isEnvVarName } from './clientauth.js';
 import { DEFAULT_LAUNCH_SCOPE } from './launch.js';
 import { saveProfile, suggestName, expandHome, findConfig } from './profiles.js';
 
@@ -126,17 +126,24 @@ export async function runWizard({ prompter, out, configPath, cwd = process.cwd()
         continue;
       }
       out(`  OK: ${loaded.checks[0].detail}. The key file is never copied or uploaded.`);
-      profile.key = k;
+      // Profiles resolve key paths against the profile file's folder, not the current one.
+      profile.key = path.relative(path.dirname(target), abs) || abs;
       profile.kid = (await prompter.ask('Key ID (kid) registered for this key', { defaultValue: loaded.kid })).trim() || undefined;
       break;
     }
     const jwks = (await prompter.ask('Your JWKS URL, if you registered one (Enter to skip)')).trim();
     if (jwks) profile.jwksUrl = jwks;
   } else if (auth !== 'none') {
-    const name = (
-      await prompter.ask('\nEnvironment variable that will hold the client secret', { defaultValue: DEFAULT_SECRET_ENV })
-    ).trim();
-    profile.secretEnv = name || DEFAULT_SECRET_ENV;
+    for (;;) {
+      const name = (
+        await prompter.ask('\nEnvironment variable that will hold the client secret', { defaultValue: DEFAULT_SECRET_ENV })
+      ).trim();
+      if (!name || isEnvVarName(name)) {
+        profile.secretEnv = name || DEFAULT_SECRET_ENV;
+        break;
+      }
+      out('  Type the variable’s NAME, like MY_APP_SECRET (capitals, digits and _), not the secret itself.');
+    }
     out(
       env[profile.secretEnv]
         ? `  ${profile.secretEnv} is set in this shell.`

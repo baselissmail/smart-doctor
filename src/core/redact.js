@@ -76,3 +76,18 @@ export function redactBody(body, contentType = '') {
     return text.length > MAX_BODY ? text.slice(0, MAX_BODY) + `… [${text.length - MAX_BODY} more chars]` : text;
   }
 }
+
+/**
+ * Mask secrets inside free text a server sent back (error_description, a non-JSON body), which
+ * reaches checks and reports outside the HTTP trace: the exact values the request carried and
+ * anything shaped like a JWT.
+ * @param {string | undefined} text
+ * @param {(string | undefined)[]} [known]  secret values from the request (code, verifier, secret…)
+ * @returns {string | undefined}
+ */
+export function redactText(text, known = []) {
+  if (!text) return text;
+  let out = String(text);
+  for (const v of known) if (v && v.length >= 6) out = out.split(v).join(String(mask(v)));
+  return out.replace(/\beyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]*/g, (m) => String(mask(m)));
+}

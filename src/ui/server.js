@@ -244,7 +244,8 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
       .then((result) => {
         record.result = result;
       })
-      .catch((e) => push('error', { message: e.message }))
+      // Not 'error': EventSource uses that name for its own connection errors.
+      .catch((e) => push('run-error', { message: e.message }))
       .finally(() => {
         push('end', {});
         // forget old runs after 30 minutes
@@ -255,9 +256,19 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
 
   function streamEvents(r, req, res, hdr) {
     res.writeHead(200, { ...hdr, 'content-type': 'text/event-stream', connection: 'keep-alive' });
-    const write = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(event === 'done' ? publicResult(data) : data)}\n\n`);
+    let ended = false;
+    const write = (event, data) => {
+      if (ended) return;
+      res.write(`event: ${event}\ndata: ${JSON.stringify(event === 'done' ? publicResult(data) : data)}\n\n`);
+      // Close the stream once the run is over, so the browser does not reconnect and replay it.
+      if (event === 'end') {
+        ended = true;
+        r.listeners.delete(write);
+        res.end();
+      }
+    };
     for (const e of r.events) write(e.event, e.data);
-    r.listeners.add(write);
+    if (!ended) r.listeners.add(write);
     const ping = setInterval(() => res.write(': ping\n\n'), 15000);
     req.on('close', () => {
       clearInterval(ping);

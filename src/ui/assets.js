@@ -568,8 +568,17 @@ async function startRun(secret) {
       drawTrace();
       renderDone(r);
     });
-    on('error', (e) => { $('verdict').textContent = 'smart-doctor could not run this profile.'; $('verdict-sub').textContent = e.message; $('verdict').dataset.v = 'fail'; setRunning(false); });
+    on('run-error', (e) => { $('verdict').textContent = 'smart-doctor could not run this profile.'; $('verdict-sub').textContent = e.message; $('verdict').dataset.v = 'fail'; setRunning(false); });
     on('end', () => { src.close(); setRunning(false); });
+    // The connection itself failed (smart-doctor stopped, laptop slept): say so instead of waiting forever.
+    src.onerror = () => {
+      if (src.readyState === EventSource.CLOSED || state.source !== src) return;
+      src.close();
+      $('verdict').textContent = 'Lost the connection to smart-doctor.';
+      $('verdict-sub').textContent = 'Is it still running in your terminal? Start it again and re-run the check.';
+      $('verdict').dataset.v = 'fail';
+      setRunning(false);
+    };
   } catch (e) {
     $('verdict').textContent = 'smart-doctor could not start the check.';
     $('verdict-sub').textContent = e.message;

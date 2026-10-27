@@ -15,6 +15,15 @@ import { CLIENT_ASSERTION_TYPE } from './token.js';
 export const AUTH_METHODS = ['private_key_jwt', 'client_secret_basic', 'client_secret_post', 'none'];
 export const DEFAULT_SECRET_ENV = 'SMART_DOCTOR_CLIENT_SECRET';
 
+/**
+ * True for an environment variable NAME such as MY_APP_SECRET. Used wherever a user names the
+ * variable, so a secret typed there by mistake is rejected without ever being printed.
+ * @param {unknown} name
+ */
+export function isEnvVarName(name) {
+  return typeof name === 'string' && /^[A-Z_][A-Z0-9_]*$/.test(name);
+}
+
 export function isSecretAuth(auth) {
   return auth === 'client_secret_basic' || auth === 'client_secret_post';
 }
@@ -37,6 +46,12 @@ export function basicHeader(clientId, secret) {
 }
 
 /** Checks for a client secret (the value itself is never shown). */
+/** The variable's name for messages; anything that is not a name may be a secret, so it is never shown. */
+function envLabel(secretEnv) {
+  const name = secretEnv || DEFAULT_SECRET_ENV;
+  return isEnvVarName(name) ? name : 'the environment variable you named';
+}
+
 export function checkSecret({ secret, secretEnv, auth }) {
   const checks = [];
   if (!secret) {
@@ -45,8 +60,8 @@ export function checkSecret({ secret, secretEnv, auth }) {
         'secret.present',
         'Client secret available',
         STATUS.FAIL,
-        `${auth} needs a client secret, but ${secretEnv || DEFAULT_SECRET_ENV} is not set.`,
-        `export ${secretEnv || DEFAULT_SECRET_ENV}='…' in this shell (never pass secrets as command-line flags).`,
+        `${auth} needs a client secret, but ${envLabel(secretEnv)} is not set.`,
+        `export ${isEnvVarName(secretEnv || DEFAULT_SECRET_ENV) ? secretEnv || DEFAULT_SECRET_ENV : 'MY_APP_SECRET'}='…' in this shell (never pass secrets as command-line flags).`,
       ),
     );
     return checks;

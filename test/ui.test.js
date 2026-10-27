@@ -107,6 +107,18 @@ test('backend run streams steps and finishes ok', async () => {
   });
 });
 
+test('the event stream closes after the run ends, so a reconnect does not hang or replay twice', async () => {
+  await withUi(async (ui) => {
+    const { runId } = await (await api(ui, '/api/runs', { profile: 'demo-backend' })).json();
+    await events(ui, runId);
+    // Reconnect after the run is over: the server replays the log once and closes the stream.
+    const res = await fetch(`${ui.baseUrl}/api/runs/${runId}/events?t=${ui.token}`);
+    const text = await Promise.race([res.text(), new Promise((_, no) => setTimeout(() => no(new Error('stream stayed open')), 3000))]);
+    assert.equal(text.match(/^event: end$/gm)?.length, 1);
+    assert.ok(!/^event: error$/m.test(text), "run failures use 'run-error', never EventSource's own 'error'");
+  });
+});
+
 test('secret supplied in the page is used for one run only', async () => {
   await withUi(async (ui) => {
     // demo-secret normally reads SMART_DOCTOR_DEMO_SECRET; a wrong in-memory secret must override it and fail

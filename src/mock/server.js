@@ -37,6 +37,8 @@ export const MODES = {
   'no-s256': 'Server advertises only PKCE "plain" (SMART requires S256)',
   'refresh-disabled': 'No refresh tokens are issued even if offline_access is granted',
   'no-patient-context': 'No patient is returned even when launch/patient is granted',
+  'id-token-wrong-aud': 'The id_token is issued for another audience (not the client_id)',
+  'server-jwks-down': 'The server JWKS (for verifying id_tokens) answers 500',
 };
 
 const CLOCK_SKEW_SECONDS = 600;
@@ -243,7 +245,7 @@ export async function startMock(opts = {}) {
       out.refresh_token = rt;
     }
     if (scope.includes('openid')) {
-      const claims = { aud: client.clientId };
+      const claims = { aud: modes.has('id-token-wrong-aud') ? 'some-other-app' : client.clientId };
       if (scope.includes('fhirUser')) claims.fhirUser = `${urls().fhirBase}/Practitioner/${user}`;
       out.id_token = await new SignJWT(claims)
         .setProtectedHeader({ alg: 'ES384', kid: serverJwk.kid, typ: 'JWT' })
@@ -351,7 +353,8 @@ export async function startMock(opts = {}) {
           { 'content-type': 'application/fhir+json' },
         );
       }
-      if (req.method === 'GET' && url.pathname === '/oauth2/jwks') return send(200, { keys: [serverJwk] });
+      if (req.method === 'GET' && url.pathname === '/oauth2/jwks')
+        return modes.has('server-jwks-down') ? send(500, { error: 'server_error' }) : send(200, { keys: [serverJwk] });
       if (req.method === 'GET' && url.pathname === '/smart-style.json') return send(200, { color_background: '#f6f7f7' });
 
       // --- Hosted client JWKS (convenience for demos/tests) --------------
