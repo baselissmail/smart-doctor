@@ -87,7 +87,7 @@ test('relative key paths resolve against the profile file, secrets come from env
     { fhir: 'https://a/fhir', key: 'keys/k.pem', secretEnv: 'X_SECRET' },
     { configPath: '/team/repo/smart-doctor.yaml', env: { X_SECRET: 'v' } },
   );
-  assert.equal(o.keyPath, '/team/repo/keys/k.pem');
+  assert.equal(o.keyPath, path.resolve('/team/repo', 'keys/k.pem')); // D:\team\repo\keys\k.pem on Windows
   assert.equal(o.secret, 'v');
   assert.equal(o.flow, 'backend');
   assert.equal(profileToOptions({ redirectUri: 'http://localhost:1/cb' }).flow, 'launch');
