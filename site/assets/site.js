@@ -3,12 +3,13 @@
   // ---- theme: auto → dark → light → auto
   const root = document.documentElement;
   const toggle = document.getElementById('theme');
-  const labels = { auto: 'Theme: auto', dark: 'Theme: dark', light: 'Theme: light' };
+  const names = { auto: 'automatic', dark: 'dark', light: 'light' };
   const current = () => root.dataset.theme || 'auto';
   const show = () => {
     if (!toggle) return;
-    toggle.textContent = labels[current()];
-    toggle.setAttribute('aria-label', `Colour theme: ${current()}. Change.`);
+    toggle.dataset.mode = current();
+    toggle.setAttribute('aria-label', `Colour theme: ${names[current()]}. Change`);
+    toggle.title = `Theme: ${names[current()]}`;
   };
   if (toggle) {
     toggle.hidden = false;
@@ -27,21 +28,29 @@
     });
   }
 
+  // ---- mobile menu: close after choosing a link
+  for (const menu of document.querySelectorAll('details.menu')) {
+    menu.addEventListener('click', (e) => {
+      if (e.target instanceof Element && e.target.closest('a')) menu.removeAttribute('open');
+    });
+  }
+
   // ---- copy buttons next to commands
   for (const btn of document.querySelectorAll('button[data-copy]')) {
+    if (!(btn instanceof HTMLButtonElement)) continue;
     btn.hidden = false;
     btn.addEventListener('click', async () => {
-      const code = document.getElementById(btn.dataset.copy);
-      const text = code ? code.textContent : '';
+      const code = document.getElementById(btn.dataset.copy || '');
+      if (!code) return;
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(code.textContent || '');
         btn.textContent = 'Copied';
       } catch {
         const range = document.createRange();
         range.selectNodeContents(code);
         const sel = getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        sel?.removeAllRanges();
+        sel?.addRange(range);
         btn.textContent = 'Selected';
       }
       setTimeout(() => (btn.textContent = 'Copy'), 1600);
@@ -50,25 +59,33 @@
 
   // ---- error catalogue search
   const q = document.getElementById('q');
-  if (q) {
-    const items = [...document.querySelectorAll('[data-search]')];
-    const stages = [...document.querySelectorAll('.stage')];
+  if (q instanceof HTMLInputElement) {
+    const items = /** @type {HTMLElement[]} */ ([...document.querySelectorAll('[data-search]')]);
+    const blocks = /** @type {HTMLElement[]} */ ([...document.querySelectorAll('[data-block]')]);
     const out = document.getElementById('q-count');
     const none = document.getElementById('q-none');
-    q.closest('.search').hidden = false;
+    const box = q.closest('.search');
+    if (box instanceof HTMLElement) box.hidden = false;
     const run = () => {
       const terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
       let shown = 0;
       for (const li of items) {
-        const hit = terms.every((t) => li.dataset.search.includes(t));
+        const hit = terms.every((t) => (li.dataset.search || '').includes(t));
         li.hidden = !hit;
         if (hit) shown++;
       }
-      for (const s of stages) s.hidden = !s.querySelector('[data-search]:not([hidden])');
-      out.textContent = terms.length ? `${shown} of ${items.length} causes match` : '';
-      none.hidden = shown > 0;
+      for (const b of blocks) b.hidden = !b.querySelector('[data-search]:not([hidden])');
+      if (out) out.textContent = terms.length ? `${shown} of ${items.length} causes match` : '';
+      if (none) none.hidden = shown > 0;
     };
     q.addEventListener('input', run);
+    document.addEventListener('keydown', (e) => {
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      if (e.key === '/' && !typing) {
+        e.preventDefault();
+        q.focus();
+      }
+    });
     if (q.value) run();
   }
 })();
