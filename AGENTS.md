@@ -12,7 +12,7 @@ smart-doctor diagnoses failing SMART on FHIR logins: backend services (`client_c
 ## Orientation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): the Run event stream, adapters, and why redirects work everywhere.
-- Engine: `src/doctor.js` (backend), `src/launch.js` (sign-in), `src/diagnose.js` (ranks causes).
+- Engine: `src/doctor.js` (backend), `src/launch.js` (sign-in), `src/diagnose.js` (ranks causes), `src/core/` (Run events, redaction, results), `src/options.js` (profile + flags + env → options).
 - Knowledge (data): `src/knowledge/causes.js`, `src/knowledge/errors.js`, `src/vendors/*.js`. Guarded by `test/knowledge.test.js`.
 - Types: JSDoc, checked by `tsc` (no `.ts` files, no build step). Shared shapes in `src/types.js`.
 - Front-ends: `src/cli.js`, `src/ui/`, the GitHub Action (`action.yml`). Website generator: `site/`.

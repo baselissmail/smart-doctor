@@ -4,6 +4,16 @@
 
 - **Type checking**: TypeScript checks the JSDoc types (`npm run typecheck`, in `npm run check` and CI). Shared option types in `src/types.js`.
 - Servers report a busy port as an error instead of crashing (shared `listen` helper).
+- Fixed: the `id_token` check now reports an audience mismatch once, and tells an expired token, a missing signing key and an unreadable server JWKS apart from a bad signature.
+- Fixed: the setup wizard saved an existing key path relative to the current folder instead of the profile file.
+- Fixed: `--timeout 30s` (and `--wait`, `--port`, `--status`) became a NaN timer that looked like a network failure; whole numbers are now required.
+- Fixed: a secret passed to `--client-secret-env` (or typed into the wizard's variable-name question) could be printed back, including in `--report`; only variable names are accepted and nothing else is echoed.
+- Fixed: server error text that echoed the request's code, secret or a token reached checks and reports unmasked.
+- Fixed: the local web view could hang on "Running…" after a dropped connection and replay a run's events twice.
+- The local web view now applies the same option fallbacks and validation as the CLI.
+- Library: `runLaunch` and `Run` are exported; `UsageError`, results and options live in `src/core/` and `src/options.js`.
+- Website: redesigned around a bedside-monitor hero built from a real run, with a diagram of what leaves your machine.
+- Practice EHR: new failure modes `id-token-wrong-aud` and `server-jwks-down` (18 in total).
 
 ## 0.2.0 — 2026-10-28
 

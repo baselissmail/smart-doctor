@@ -15,7 +15,12 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { Run } from '../core/run.js';
-import { runCheck, publicResult } from '../doctor.js';
+import { runCheck } from '../doctor.js';
+import { publicResult } from '../core/result.js';
+import { UsageError } from '../core/errors.js';
+import { buildOptions } from '../options.js';
+import { startDemoMock, DEMO } from '../mock/demo.js';
+import { isSecretAuth } from '../clientauth.js';
 import { runLaunch } from '../launch.js';
 import { discover } from '../discovery.js';
 import { detectVendor } from '../vendors/index.js';
@@ -57,11 +62,10 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
   const runs = new Map();
   let demoState;
   if (demo) {
-    const { startDemoMock } = await import('../cli.js');
     demoState = await startDemoMock({ port: 0 });
     log(`Practice EHR running at ${demoState.mock.fhirBase} (synthetic data only)`);
   }
-  const demoEnv = demo ? { SMART_DOCTOR_DEMO_SECRET: (await import('../cli.js')).DEMO.secret } : {};
+  const demoEnv = demo ? { SMART_DOCTOR_DEMO_SECRET: DEMO.secret } : {};
 
   async function allProfiles() {
     const { profiles } = await loadProfiles(configPath);
@@ -121,7 +125,7 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
         const profiles = await allProfiles();
         const secrets = {};
         for (const [n, p] of Object.entries(profiles)) {
-          if (p.auth === 'client_secret_basic' || p.auth === 'client_secret_post') {
+          if (isSecretAuth(p.auth)) {
             const name = p.secretEnv || DEFAULT_SECRET_ENV;
             secrets[n] = { env: name, set: Boolean(env[name] || demoEnv[name]) };
           }
@@ -174,7 +178,14 @@ export async function startUi({ port = 0, configPath, demo = false, log = () => 
         const p = profiles[name];
         if (!p) return send(404, { error: `No profile "${name}"` });
         const { source, ...clean } = p;
-        const opts = profileToOptions(clean, { configPath, env: { ...env, ...demoEnv } });
+        let opts;
+        try {
+          // The same fallbacks and validation as the CLI (env defaults, key file exists, known values).
+          opts = buildOptions({ profile: clean, configPath, env: { ...env, ...demoEnv } });
+        } catch (e) {
+          if (e instanceof UsageError) return send(400, { error: e.message });
+          throw e;
+        }
         if (secret) opts.secret = String(secret);
         const r = startRun(opts);
         return send(202, { runId: r.id, flow: opts.flow });

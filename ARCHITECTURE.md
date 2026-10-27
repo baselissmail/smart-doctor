@@ -15,7 +15,11 @@ smart-doctor borrows four ideas from tools that have earned their reputations.
 bin/smart-doctor.js        entry point (CLI adapter)
 src/
   core/run.js              Run: the event stream every front-end subscribes to
-  core/redact.js           masking applied to every HTTP exchange at the source
+  core/redact.js           masking applied to every HTTP exchange at the source (and to server error text)
+  core/result.js           the shared end of every flow: diagnose, emit 'done', shape the result
+  core/errors.js           UsageError (bad input: front-ends show the message and exit 2)
+  types.js                 shared JSDoc types (RunOptions, RunContext, adapters); checked by `npm run typecheck`
+  options.js               profile + flags + environment → RunOptions, validated (used by the CLI and the UI)
   util.js                  check records + the one HTTP helper (records into the Run)
   doctor.js                backend-services flow (client_credentials)
   launch.js                SMART App Launch flow (authorization_code + PKCE)
@@ -31,6 +35,7 @@ src/
   cli.js                   CLI adapter
   ui/server.js ui/assets.js  local web UI adapter (SSE + a single static page)
   mock/server.js           practice EHR with failure modes
+  mock/demo.js             the practice EHR's three demo apps and matching profiles
 site/                      static website generator (landing page + error catalogue from src/knowledge)
 scripts/                   demo, real-server smoke test, binaries, UI screenshots
 ```

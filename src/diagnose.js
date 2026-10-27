@@ -6,6 +6,7 @@
 // causes we cannot see from the outside.
 
 import { STATUS } from './util.js';
+import { isSecretAuth } from './clientauth.js';
 import { CAUSES } from './knowledge/causes.js';
 import { TEXT_PATTERNS, normalizeError } from './knowledge/errors.js';
 
@@ -222,7 +223,7 @@ export function diagnose(facts) {
   // When the server says invalid_client and nothing local explains it
   const localExplains = causes.some((c) => c.confidence >= 0.7);
   if (isAuthErr && !localExplains) {
-    const secretAuth = facts.auth === 'client_secret_basic' || facts.auth === 'client_secret_post';
+    const secretAuth = isSecretAuth(facts.auth);
     if (secretAuth) {
       add(cause('secret_invalid', 0.65, serverSaid));
       add(cause('client_unknown', 0.5));

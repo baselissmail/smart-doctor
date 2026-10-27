@@ -8,11 +8,12 @@ import { checkClock } from './clock.js';
 import { checkJwks } from './jwks.js';
 import { buildAssertion, lintAssertion } from './assertion.js';
 import { requestToken, probe } from './token.js';
-import { diagnose } from './diagnose.js';
 import { detectVendor } from './vendors/index.js';
 import { check, STATUS } from './util.js';
 import { Run, withRun } from './core/run.js';
 import { inferAuth, checkSecret, clientAuthParams, AUTH_METHODS } from './clientauth.js';
+import { finish } from './core/result.js';
+import { UsageError } from './core/errors.js';
 
 /**
  * Backend-services check (client_credentials).
@@ -136,33 +137,5 @@ async function backendFlow(opts, run) {
   });
 }
 
-/** Shared tail for every flow: diagnose, emit, and shape the result. */
-export function finish(run, meta, token, facts) {
-  const sections = run.sections();
-  const diagnosis = diagnose({ checks: sections.flatMap((s) => s.checks), token, vendor: meta.vendor, ...facts });
-  const result = {
-    runId: run.id,
-    flow: run.flow,
-    meta,
-    sections,
-    diagnosis,
-    http: run.exchanges,
-    tokenRequested: Boolean(token),
-    tokenObtained: Boolean(token?.token),
-    // In memory only (for the probe / library users). Never rendered unmasked.
-    _accessToken: token?.token?.accessToken,
-  };
-  run.emit('done', publicResult(result));
-  return result;
-}
-
-/** A result safe to serialise to any front-end. */
-export function publicResult(r) {
-  const { _accessToken, ...rest } = r;
-  return {
-    ...rest,
-    meta: { ...rest.meta, vendor: rest.meta.vendor ? { id: rest.meta.vendor.id, name: rest.meta.vendor.name } : undefined },
-  };
-}
-
-export class UsageError extends Error {}
+export { finish, publicResult } from './core/result.js';
+export { UsageError } from './core/errors.js';

@@ -47,7 +47,7 @@ Now break things and check the diagnosis:
 | restart the mock with `--mode clock-skew` → `check demo-backend` | clock skew |
 | restart with `--mode secret-only` → `check demo-backend` | server doesn't accept this auth method |
 | restart with `--mode no-patient-context` → `check demo-launch` | no patient context (warning) |
-| restart with `--mode user-denies`, `wrong-state`, `rate-limit`, … | `mock --list-modes` shows all 16 |
+| restart with `--mode user-denies`, `wrong-state`, `rate-limit`, … | `mock --list-modes` shows all 18 |
 | add `--verbose` to anything | every request and response, secrets masked |
 | add `--report` to anything | paste-safe Markdown; client ID masked |
 

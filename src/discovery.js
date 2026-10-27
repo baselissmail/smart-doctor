@@ -165,15 +165,3 @@ export function tokenUrlFromCapabilityStatement(cs) {
   }
   return undefined;
 }
-
-/** Algorithms the server says it accepts for client assertions (if advertised). */
-export function advertisedAlgs(config) {
-  const v = config?.token_endpoint_auth_signing_alg_values_supported;
-  return Array.isArray(v) ? v : undefined;
-}
-
-/** Whether the server advertises SMART v2 scopes (permission-v2) and/or v1. */
-export function scopeVersions(config) {
-  const caps = Array.isArray(config?.capabilities) ? config.capabilities : [];
-  return { v1: caps.includes('permission-v1'), v2: caps.includes('permission-v2'), advertised: caps.length > 0 };
-}

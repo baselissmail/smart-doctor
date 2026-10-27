@@ -66,10 +66,18 @@ export class Run extends EventEmitter {
     };
   }
 
-  /** Add checks to a step that already ended (e.g. clock from a later response). */
+  /**
+   * Add checks to a step that already ended (e.g. the clock, from a later response's Date header).
+   * Creates the step if it never ran, so a late check is never silently dropped.
+   * @param {string} id
+   * @param {...any} checks
+   */
   amend(id, ...checks) {
-    const s = this.steps.find((x) => x.id === id);
-    if (!s) return;
+    let s = this.steps.find((x) => x.id === id);
+    if (!s) {
+      s = { id, name: id.charAt(0).toUpperCase() + id.slice(1), status: 'running', checks: [] };
+      this.steps.push(s);
+    }
     s.checks.push(...checks.flat().filter(Boolean));
     s.status = rollup(s.checks);
     this.emit('step:update', { ...s });

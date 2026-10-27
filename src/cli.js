@@ -3,22 +3,23 @@
 // lives here.
 
 import { parseArgs } from 'node:util';
-import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { runCheck, UsageError } from './doctor.js';
+import { runCheck } from './doctor.js';
+import { UsageError } from './core/errors.js';
+import { resolveOptions, wholeNumber } from './options.js';
+import { startDemoMock, DEMO } from './mock/demo.js';
 import { runLaunch } from './launch.js';
 import { Run } from './core/run.js';
-import { renderHuman, renderJson, renderMarkdown, confidenceLabel } from './report.js';
+import { renderHuman, renderJson, renderMarkdown, renderChecks, confidenceLabel } from './report.js';
 import { lintAssertion } from './assertion.js';
 import { checkJwks } from './jwks.js';
 import { explainError } from './diagnose.js';
 import { detectVendor, VENDORS } from './vendors/index.js';
 import { generateKeys } from './keys.js';
-import { startMock, MODES } from './mock/server.js';
+import { MODES } from './mock/server.js';
 import { STATUS, mask } from './util.js';
-import { DEFAULT_SECRET_ENV, isEnvVarName } from './clientauth.js';
-import { findConfig, loadProfiles, profileToOptions, saveProfile, ProfileError } from './profiles.js';
+import { DEFAULT_SECRET_ENV } from './clientauth.js';
+import { findConfig, loadProfiles, saveProfile, ProfileError } from './profiles.js';
 import { runWizard } from './wizard.js';
 import { systemBrowser } from './adapters/browser.js';
 import { terminalPrompter } from './adapters/prompt.js';
@@ -77,6 +78,9 @@ check / launch options (override the profile)
 
 Exit codes: 0 = works (or offline checks pass) · 1 = problems found · 2 = usage error
 `;
+
+export { resolveOptions, buildOptions } from './options.js';
+export { startDemoMock, DEMO } from './mock/demo.js';
 
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, stdin: process.stdin }) {
   const out = (s) => io.stdout.write(s + '\n');
@@ -244,80 +248,6 @@ const CHECK_OPTIONS = {
   'no-color': { type: 'boolean' },
 };
 
-/**
- * Parse a whole-number option. A typo such as "30s" is a usage error rather than a NaN timer
- * that fires at once and looks like a network failure.
- * @param {string} flag
- * @param {unknown} value
- * @param {number} [min]
- */
-function wholeNumber(flag, value, min = 0) {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < min)
-    throw new UsageError(`--${flag} must be a whole number${min ? ` of at least ${min}` : ''} (got "${value}").`);
-  return n;
-}
-
-/**
- * Build engine options from (profile ⊕ env ⊕ flags). Exported for the UI and tests.
- * @param {{ profileName?: string, values?: Record<string, any>, env?: NodeJS.ProcessEnv, forced?: Partial<import('./types.js').RunOptions> }} p
- * @returns {Promise<import('./types.js').RunOptions & Record<string, any>>}
- */
-export async function resolveOptions({ profileName, values = {}, env = process.env, forced = {} }) {
-  const cfg = findConfig({ explicit: values.config, env });
-  /** @type {Record<string, any>} */
-  let base = {};
-  if (profileName) {
-    const { profiles } = await loadProfiles(cfg.path);
-    if (!profiles[profileName]) {
-      const known = Object.keys(profiles);
-      throw new UsageError(
-        `No profile "${profileName}" in ${cfg.path}.${known.length ? ` Known: ${known.join(', ')}.` : ' Create one with: smart-doctor init'}`,
-      );
-    }
-    base = profileToOptions(profiles[profileName], { configPath: cfg.path, env });
-  }
-  if (values['client-secret-env'] !== undefined && !isEnvVarName(values['client-secret-env']))
-    throw new UsageError('--client-secret-env takes the NAME of an environment variable (like MY_APP_SECRET), not the secret itself.');
-  const secretEnv = values['client-secret-env'] || base.secretEnv || DEFAULT_SECRET_ENV;
-  // Precedence: command-line flag > profile > environment variable.
-  const pick = (flag, envName, fromProfile) => values[flag] ?? fromProfile ?? (envName ? env[envName] : undefined);
-  const opts = {
-    ...base,
-    flow: forced.flow || values.flow || base.flow || (values['redirect-uri'] ? 'launch' : 'backend'),
-    fhirBase: pick('fhir', 'SMART_DOCTOR_FHIR', base.fhirBase),
-    clientId: pick('client-id', 'SMART_DOCTOR_CLIENT_ID', base.clientId),
-    auth: pick('auth', undefined, base.auth),
-    keyPath: values.key
-      ? path.resolve(values.key)
-      : base.keyPath || (env.SMART_DOCTOR_KEY ? path.resolve(env.SMART_DOCTOR_KEY) : undefined),
-    kid: pick('kid', 'SMART_DOCTOR_KID', base.kid),
-    alg: pick('alg', undefined, base.alg),
-    jwksUrl: pick('jwks-url', 'SMART_DOCTOR_JWKS_URL', base.jwksUrl),
-    jku: values.jku,
-    scope: pick('scope', undefined, base.scope),
-    tokenUrl: pick('token-url', undefined, base.tokenUrl),
-    aud: values.aud,
-    vendor: pick('vendor', undefined, base.vendor),
-    probePath: pick('probe', undefined, base.probePath),
-    redirectUri: pick('redirect-uri', undefined, base.redirectUri),
-    redirectMode: pick('redirect-mode', undefined, base.redirectMode) || 'auto',
-    secretEnv,
-    secret: env[secretEnv],
-    tokenRequest: !values.offline,
-    timeoutMs: values.timeout !== undefined ? wholeNumber('timeout', values.timeout, 1) : base.timeoutMs || 15000,
-    waitMs: values.wait !== undefined ? wholeNumber('wait', values.wait, 1) * 1000 : 300000,
-    testRefresh: !values['no-refresh'],
-    configPath: cfg.path,
-  };
-  if (!['backend', 'launch'].includes(opts.flow)) throw new UsageError(`--flow must be backend or launch`);
-  if (opts.keyPath && !existsSync(opts.keyPath)) throw new UsageError(`Key file not found: ${opts.keyPath}`);
-  if (opts.alg && !/^(RS|ES|PS)(256|384|512)$/.test(opts.alg)) throw new UsageError(`Unsupported --alg ${opts.alg}`);
-  if (opts.redirectMode && !['auto', 'loopback', 'paste'].includes(opts.redirectMode))
-    throw new UsageError('--redirect-mode must be auto, loopback or paste');
-  return opts;
-}
-
 async function cmdCheck(args, io, forced) {
   const out = (s) => io.stdout.write(s + '\n');
   const err = (s) => io.stderr.write(s + '\n');
@@ -448,20 +378,7 @@ async function cmdInspect(args, out, stdin) {
   if (values.json) {
     out(JSON.stringify({ header: lint.header, claims: lint.claims, checks, signature: '[not shown]' }, null, 2));
   } else {
-    const result = {
-      meta: { clientId: lint.claims?.iss, tokenUrl: values['token-url'] },
-      sections: [{ name: `Assertion ${mask(jwt, 12)}`, checks }],
-      diagnosis: { verdict: failedAny ? 'fail' : 'offline', causes: [] },
-    };
-    const text = renderHuman(result, { color: useColor(values) }).split('\n');
-    out(
-      text
-        .slice(
-          0,
-          text.findIndex((l) => /Result:/.test(l)),
-        )
-        .join('\n'),
-    );
+    out(renderChecks([{ name: `Assertion ${mask(jwt, 12)}`, checks }], { color: useColor(values) }));
     if (lint.header) {
       out('Decoded header: ' + JSON.stringify(lint.header));
       out('Decoded claims: ' + JSON.stringify(lint.claims));
@@ -519,64 +436,6 @@ async function cmdKeygen(args, out) {
 }
 
 // ---------------------------------------------------------------- mock
-
-export const DEMO = {
-  secret: 'demo-secret-value',
-  redirects: ['http://localhost:9876/callback', 'http://127.0.0.1:9876/callback', 'https://app.example.com/smart/callback'],
-};
-
-/**
- * Start the practice EHR with three demo apps. Shared by `mock` and `ui --demo`.
- * @param {{ port?: number, host?: string, modes?: string[], verboseErrors?: boolean, log?: (line: string) => void, keyDir?: string }} [opts]
- */
-export async function startDemoMock({
-  port = 4013,
-  host = '127.0.0.1',
-  modes = [],
-  verboseErrors,
-  log,
-  keyDir = path.resolve('.smart-doctor/demo'),
-} = {}) {
-  const pem = path.join(keyDir, 'private-key.pem');
-  const jwks = path.join(keyDir, 'jwks.json');
-  if (!existsSync(pem) || !existsSync(jwks)) await generateKeys({ alg: 'ES384', kid: 'demo-key-1', outDir: keyDir });
-  const kid = JSON.parse(await readFile(jwks, 'utf8')).keys[0].kid;
-  const mock = await startMock({
-    port,
-    host,
-    modes,
-    verboseErrors,
-    log,
-    clients: [
-      { clientId: 'demo-backend', jwksFile: jwks },
-      { clientId: 'demo-secret', secret: DEMO.secret },
-      { clientId: 'demo-launch', public: true, redirectUris: DEMO.redirects },
-    ],
-  });
-  const profiles = {
-    'demo-backend': {
-      flow: 'backend',
-      fhir: mock.fhirBase,
-      clientId: 'demo-backend',
-      auth: 'private_key_jwt',
-      key: pem,
-      kid,
-      jwksUrl: mock.jwksUrlFor('demo-backend'),
-      scope: 'system/Patient.rs',
-    },
-    'demo-secret': {
-      flow: 'backend',
-      fhir: mock.fhirBase,
-      clientId: 'demo-secret',
-      auth: 'client_secret_basic',
-      secretEnv: 'SMART_DOCTOR_DEMO_SECRET',
-      scope: 'system/Patient.rs',
-    },
-    'demo-launch': { flow: 'launch', fhir: mock.fhirBase, clientId: 'demo-launch', auth: 'none', redirectUri: DEMO.redirects[0] },
-    'demo-launch-paste': { flow: 'launch', fhir: mock.fhirBase, clientId: 'demo-launch', auth: 'none', redirectUri: DEMO.redirects[2] },
-  };
-  return { mock, profiles, pem, kid };
-}
 
 async function cmdMock(args, out) {
   const { values } = parseArgs({

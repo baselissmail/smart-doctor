@@ -105,7 +105,7 @@ Any flag overrides the profile: `smart-doctor check epic-sandbox --kid new-key-2
 | `explain '<error>'` | Explain an error message you already have |
 | `inspect <jwt>` | Lint a client assertion from your app's logs (no key needed; signature never printed) |
 | `keygen` | New RS384/ES384 key pair + public JWKS |
-| `mock` | Practice EHR with 16 failure modes (`--list-modes`) |
+| `mock` | Practice EHR with 18 failure modes (`--list-modes`) |
 
 Useful flags: `--verbose` (every HTTP request and response, secrets masked) · `--report` (Markdown safe to paste into a ticket or AI chat) · `--json` · `--offline` (local checks only) · `--aud` (reproduce your app's aud) · `--redirect-mode paste|loopback`. Run `smart-doctor --help` for all.
 

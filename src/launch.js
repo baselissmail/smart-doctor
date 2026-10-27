@@ -23,7 +23,8 @@ import { check, STATUS, httpRequest, mask } from './util.js';
 import { Run, withRun } from './core/run.js';
 import { inferAuth, checkSecret, clientAuthParams, AUTH_METHODS } from './clientauth.js';
 import { isLoopbackUrl, startLoopback, LoopbackError } from './loopback.js';
-import { finish, UsageError } from './doctor.js';
+import { finish } from './core/result.js';
+import { UsageError } from './core/errors.js';
 import { redactText } from './core/redact.js';
 
 export const DEFAULT_LAUNCH_SCOPE = 'launch/patient openid fhirUser offline_access patient/*.rs';

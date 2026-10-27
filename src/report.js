@@ -93,6 +93,29 @@ const indent = (text, pad) =>
     .join('\n');
 
 /** Human-readable terminal output. */
+/** The checks, section by section (shared by the full report and `inspect`). */
+function sectionLines(sections, p, sc = (/** @type {string} */ s) => s) {
+  const lines = [];
+  for (const s of sections) {
+    lines.push(p.bold(s.name));
+    for (const c of s.checks) {
+      lines.push(`  ${p.status(c.status, ICON[c.status] || '?')} ${c.title}${c.detail ? p.dim(' — ') + sc(c.detail) : ''}`);
+      if (c.fix && (c.status === STATUS.FAIL || c.status === STATUS.WARN)) lines.push(`      ${p.dim('fix:')} ${c.fix}`);
+    }
+    lines.push('');
+  }
+  return lines;
+}
+
+/**
+ * Render sections of checks without a verdict or causes (the `inspect` command).
+ * @param {{ name: string, checks: import('./util.js').Check[] }[]} sections
+ * @param {{ color?: boolean }} [opts]
+ */
+export function renderChecks(sections, { color = false } = {}) {
+  return sectionLines(sections, paint(color)).join('\n');
+}
+
 export function renderHuman(result, { color = false, redact = false, showPublicJwk = false, verbose = false, maxCauses = 5 } = {}) {
   const p = paint(color);
   const lines = [];
@@ -104,14 +127,7 @@ export function renderHuman(result, { color = false, redact = false, showPublicJ
   else head.push(`token ${m.tokenUrl ?? '(unknown)'}`);
   lines.push(p.dim(head.join(' · ')));
   lines.push('');
-  for (const s of result.sections) {
-    lines.push(p.bold(s.name));
-    for (const c of s.checks) {
-      lines.push(`  ${p.status(c.status, ICON[c.status] || '?')} ${c.title}${c.detail ? p.dim(' — ') + sc(c.detail) : ''}`);
-      if (c.fix && (c.status === STATUS.FAIL || c.status === STATUS.WARN)) lines.push(`      ${p.dim('fix:')} ${c.fix}`);
-    }
-    lines.push('');
-  }
+  lines.push(...sectionLines(result.sections, p, sc));
 
   if (verbose && result.http?.length) {
     lines.push(p.bold(`HTTP exchanges (${result.http.length}) — secrets masked`));

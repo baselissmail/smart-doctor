@@ -1,5 +1,8 @@
 // Public library API.
-export { runCheck, UsageError } from './doctor.js';
+export { runCheck } from './doctor.js';
+export { runLaunch } from './launch.js';
+export { Run } from './core/run.js';
+export { UsageError } from './core/errors.js';
 export { loadKey, generateKeys, toPublicJwk } from './keys.js';
 export { discover } from './discovery.js';
 export { checkClock } from './clock.js';

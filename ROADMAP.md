@@ -11,6 +11,8 @@ Where smart-doctor is heading. Items marked **help wanted** are good places to s
 
 ## Later
 
+- **Code health.** Split the sign-in flow into one function per step and share the steps both flows have (credentials, discovery, clock, assertion) in one module; serve the local web view's page script and styles from real files so ESLint, the type checker and Prettier see them. *help wanted*
+
 - **Stricter type checking.** `npm run typecheck` passes today; the next steps are `strictNullChecks` (about 70 places need a typed result object rather than a code change) and then `noImplicitAny`. Good first contributions, one file at a time. *help wanted*
 
 - More vendor knowledge from public sandboxes and public documentation (MEDITECH, NextGen, Veradigm and others). *help wanted*
