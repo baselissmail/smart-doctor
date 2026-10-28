@@ -6,11 +6,11 @@ Steps 1–4 need no accounts, no credentials and no internet. Step 5 uses free p
 
 ```bash
 npm install
-npm test          # 143 tests
-npm run demo      # 25 broken scenarios and what smart-doctor concludes for each
+npm test          # unit, CLI, end-to-end and property-based tests
+npm run demo      # 25 scenarios (21 broken on purpose) and what smart-doctor concludes for each
 ```
 
-`npm test` covers unit checks, CLI, profiles and the setup wizard, the UI server, and end-to-end runs against the mock EHR for every failure mode — backend services (private key and client secret) and user sign-in (loopback and paste-back, public and confidential clients). Dedicated tests assert that no output or HTTP trace ever contains a token, code, verifier, assertion or private key.
+`npm test` covers unit checks, CLI, profiles and the setup wizard, the UI server, and end-to-end runs against the mock EHR for every failure mode — backend services (private key and client secret) and user sign-in (loopback and paste-back, public and confidential clients). Dedicated tests assert that no output or HTTP trace ever contains a token, code, verifier, assertion, private key or client secret, even when a server echoes one back, and that shared reports never show patient or user IDs. Property-based tests (fast-check) feed generated input to the parsers and the masking.
 
 `npm run demo -- --full` prints the full report for every scenario. Read a few: if a diagnosis or its wording looks wrong to you, that's worth fixing before going public.
 
@@ -49,7 +49,7 @@ Now break things and check the diagnosis:
 | restart with `--mode no-patient-context` → `check demo-launch` | no patient context (warning) |
 | restart with `--mode user-denies`, `wrong-state`, `rate-limit`, … | `mock --list-modes` shows all 18 |
 | add `--verbose` to anything | every request and response, secrets masked |
-| add `--report` to anything | paste-safe Markdown; client ID masked |
+| add `--report` to anything | paste-safe Markdown; client ID and patient IDs masked |
 
 ## 3. The guided setup (2 minutes)
 
@@ -71,7 +71,7 @@ npm run ui          # opens your browser with the web view + practice EHR
 - **New profile** → copy demo-backend with kid `typo` → run: the strip flatlines red at JWKS and the causes explain why.
 - **demo-launch** → Run → **Open the sign-in page** → Allow: the strip continues on its own.
 - **demo-launch-paste** → Run → Open the sign-in page → Allow → copy the address of the page that fails to load → paste → Continue.
-- **Copy report for a ticket** → paste somewhere: client ID masked, no tokens.
+- **Copy report for a ticket** → paste somewhere: client ID and patient IDs masked, no tokens.
 - Try it on your phone-sized window and in dark mode.
 
 Optional, automated screenshots of every state (needs Playwright):
@@ -86,7 +86,7 @@ npm run smoke:ui    # → screenshots/
 **Automated, no account needed (about 10 seconds):**
 
 ```bash
-npm run smoke:sandbox     # 16 deliberate breakages against launch.smarthealthit.org; exit 1 if a diagnosis differs
+npm run smoke:sandbox     # 16 scenarios (12 deliberate breakages) against launch.smarthealthit.org; exit 1 if a diagnosis differs
 npm run smoke:sandbox -- --full    # plus every report
 ```
 
@@ -125,7 +125,7 @@ Binaries built on Linux for macOS are unsigned; on a Mac run `codesign --force -
 
 ## Ready to share when
 
-- `npm test` is green on macOS and Linux (CI runs Node 18/20/22 on Linux, macOS and Windows).
+- `npm test` is green (CI runs it on Node 22 and 24 on Linux, macOS and Windows).
 - The demo's diagnoses all read right to you.
 - One real sandbox run succeeded and one deliberately broken sandbox run produced the right top cause, for each flow you care about.
 - You'd paste a `--report` from your own setup into a public GitHub issue without hesitation.

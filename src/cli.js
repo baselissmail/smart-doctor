@@ -71,7 +71,7 @@ check / launch options (override the profile)
   --config <file>            Profiles file (default: nearest smart-doctor.yaml)
   --json | --report          JSON, or a Markdown report safe to paste into a ticket or AI chat
   --verbose, -V              Show every HTTP request and response (secrets masked)
-  --redact                   Mask the client_id in the output
+  --redact                   Mask the client_id and patient/user ids in the output
   --show-public-jwk          Print the public JWK for your key (safe to share)
   --timeout <ms>             Network timeout per request (default 15000)
   --no-color

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `--help`, the web view's copy message, the website and the docs now say that `--redact` and shared reports also mask patient and user IDs.
+- Documentation counts corrected: 25 demo scenarios (21 broken on purpose), 16 sandbox scenarios (12 deliberate breakages), 18 practice-EHR failure modes, CI on Node 22 and 24.
+
 ## 0.2.3 — 2026-10-28
 
 - Fixed: a client secret, code or token that the server echoed back (for example in `error_description`) showed in full in `--verbose` output and in `--json`, including `--json --redact`. The HTTP trace now masks every value the request carried, wherever it appears in the response.

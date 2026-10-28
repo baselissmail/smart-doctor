@@ -351,7 +351,7 @@ ${diagram()}
 <ol class="steps">
 <li><h3>Practise first</h3><p>A web view with a practice EHR that fails on purpose. No account needed.</p>${cmd('npx smart-doctor ui --demo')}</li>
 <li><h3>Point it at your server</h3><p>A few questions, the rest discovered, saved as a profile that never holds a secret.</p>${cmd('npx smart-doctor init')}</li>
-<li><h3>Share the result safely</h3><p>The report masks the client ID, tokens and secrets: ready for a ticket, a vendor or an AI.</p>${cmd('npx smart-doctor check my-profile --report')}</li>
+<li><h3>Share the result safely</h3><p>The report masks the client ID, patient IDs, tokens and secrets: ready for a ticket, a vendor or an AI.</p>${cmd('npx smart-doctor check my-profile --report')}</li>
 </ol>
 <div class="ways">
 <div class="way"><h3>No Node.js?</h3><p>Standalone binaries for macOS, Linux and Windows on the <a href="${REPO}/releases">releases page</a>, with checksums.</p></div>

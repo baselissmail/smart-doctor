@@ -597,7 +597,7 @@ $('secret-form').addEventListener('submit', (e) => {
 $('copy').addEventListener('click', async () => {
   if (!state.run) return;
   const md = await api('/api/runs/' + state.run + '/report');
-  try { await navigator.clipboard.writeText(md); $('copied').textContent = 'Copied. Client ID and secrets are masked.'; }
+  try { await navigator.clipboard.writeText(md); $('copied').textContent = 'Copied. Client ID, patient IDs and secrets are masked.'; }
   catch { $('copied').textContent = 'Copy failed — your browser blocked clipboard access.'; }
 });
 
