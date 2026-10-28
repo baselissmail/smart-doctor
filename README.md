@@ -75,10 +75,10 @@ When the server still refuses after every local check passes, smart-doctor reads
 
 - **Ranked causes, not just errors.** Local checks first, then the server's own wording (including non-standard spellings like `Invalid Grant`), then vendor knowledge, each with evidence and a fix.
 - **Works with the redirect URI your company already registered.** `http://localhost:PORT` redirects are caught directly; for anything else you sign in, land on your company's page and paste its address back. No registration changes.
-- **Safe to share.** `--report` writes Markdown for a ticket, a vendor or an AI chat, with the client ID, tokens, codes and secrets masked.
+- **Safe to share.** `--report` writes Markdown for a ticket, a vendor or an AI chat, with the client ID, patient IDs, tokens, codes and secrets masked.
 - **Practice before production.** A built-in practice EHR with 18 failure modes, and profiles in a git-friendly `smart-doctor.yaml` that refuses to hold secrets.
 - **Built for CI.** A GitHub Action runs your profile every night and catches expiring keys and registration drift before production does.
-- **Checked against real servers.** 16 deliberate breakages against the public SMART launcher give the right diagnosis (`npm run smoke:sandbox`).
+- **Checked against real servers.** 12 deliberate breakages against the public SMART launcher, plus 4 working logins, give the right diagnosis (`npm run smoke:sandbox`).
 
 ## Install
 
@@ -158,8 +158,8 @@ The report lands in the job summary; the job fails when the login does.
 
 - Your private key signs one test assertion in-process. It is never sent, written, logged or printed. Secrets come only from environment variables, or a password field in the local web view kept in memory for one run.
 - What goes to the EHR is exactly what your app sends anyway.
-- Every HTTP exchange is redacted **inside the engine** before any front-end sees it: assertions, secrets, authorization codes, PKCE verifiers and access, refresh and id tokens. Server error text is masked too. Tests enforce all of it.
-- The FHIR call records the status code only, never a response body, so no patient data can reach a report.
+- Every HTTP exchange is redacted **inside the engine** before any front-end sees it: assertions, secrets, authorization codes, PKCE verifiers and access, refresh and id tokens. A value the server echoes back is masked wherever it appears, and no part of a client secret is ever shown. Tests enforce all of it.
+- The FHIR call records the status code only, never a response body, so no patient data can reach a report. Shared reports (`--report`, `--redact`) also mask the patient, encounter and user IDs from a sign-in.
 - No telemetry, no account, no cloud.
 
 Details: [SECURITY.md](https://github.com/baselissmail/smart-doctor/blob/main/SECURITY.md) · how it's built: [ARCHITECTURE.md](https://github.com/baselissmail/smart-doctor/blob/main/ARCHITECTURE.md) · how it's tested: [TESTING.md](https://github.com/baselissmail/smart-doctor/blob/main/TESTING.md).

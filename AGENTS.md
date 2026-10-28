@@ -23,7 +23,7 @@ smart-doctor diagnoses failing SMART on FHIR logins: backend services (`client_c
 npm run check            # lint + type check + format check + tests (no network)
 npm run typecheck        # TypeScript over the JSDoc types (src/types.js holds the shared shapes)
 npm test                 # tests only
-npm run demo             # 25 broken scenarios and their diagnoses
+npm run demo             # 25 scenarios (21 broken on purpose) and their diagnoses
 npm run smoke:sandbox    # real-server check against launch.smarthealthit.org (needs internet)
 npm run site             # build + serve the website on http://localhost:4400
 node bin/smart-doctor.js mock --write-profiles   # practice EHR; then: check demo-backend | demo-launch

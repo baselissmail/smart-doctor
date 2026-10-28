@@ -65,7 +65,7 @@ smart-doctor explain '<error JSON or text>' --url <FHIR base or token URL>
 
 ```bash
 smart-doctor mock --write-profiles     # then: check demo-backend | demo-secret | demo-launch | demo-launch-paste
-smart-doctor mock --list-modes         # 15 failure modes, e.g. --mode clock-skew
+smart-doctor mock --list-modes         # 18 failure modes, e.g. --mode clock-skew
 ```
 
 ## Reading results

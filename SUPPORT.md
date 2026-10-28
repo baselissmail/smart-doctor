@@ -7,7 +7,7 @@
 
 Before you post anything:
 
-- Share `smart-doctor … --report` output: it masks the client ID, tokens, codes and secrets.
+- Share `smart-doctor … --report` output: it masks the client ID, patient IDs, tokens, codes and secrets.
 - **Never post private keys, client secrets, tokens, authorization codes or patient data**, and leave out anything that identifies a customer or organisation.
 - The [error catalogue](https://baselissmail.github.io/smart-doctor/errors/) explains every cause smart-doctor can report, with fixes.
 

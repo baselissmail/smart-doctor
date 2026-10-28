@@ -12,11 +12,11 @@ You need Node.js 22 or newer.
 git clone https://github.com/baselissmail/smart-doctor.git && cd smart-doctor
 npm install
 npm run check        # lint + type check + format check + all tests, no network needed
-npm run demo         # 25 broken logins and what smart-doctor concludes
+npm run demo         # 25 practice logins (21 broken on purpose) and what smart-doctor concludes
 npm run ui           # the local web view with the practice EHR
 ```
 
-Optional, needs internet: `npm run smoke:sandbox` runs 16 deliberate breakages against the public SMART launcher. `npm run site` builds and serves the website at <http://localhost:4400>.
+Optional, needs internet: `npm run smoke:sandbox` runs 16 scenarios, 12 of them deliberate breakages, against the public SMART launcher. `npm run site` builds and serves the website at <http://localhost:4400>.
 
 ## Where to add what
 
