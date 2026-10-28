@@ -1,6 +1,6 @@
 name: Feature idea
 description: Something smart-doctor should check or do.
-labels: [enhancement]
+labels: [enhancement, needs-triage]
 body:
   - type: textarea
     id: problem

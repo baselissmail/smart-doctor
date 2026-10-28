@@ -1,6 +1,6 @@
 name: Vendor quirk
 description: An EHR behaves in a way smart-doctor should know about.
-labels: [knowledge, vendor]
+labels: [vendor, knowledge, needs-triage]
 body:
   - type: markdown
     attributes:

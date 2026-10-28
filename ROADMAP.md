@@ -1,6 +1,6 @@
 # Roadmap
 
-Where smart-doctor is heading. Items marked **help wanted** are good places to start — comment on the linked discussion or open one before starting something large.
+Where smart-doctor is heading. Items marked **help wanted** (also [labelled on GitHub](https://github.com/baselissmail/smart-doctor/labels/help%20wanted)) are good places to start — comment on the linked discussion or open one before starting something large.
 
 ## Next
 
