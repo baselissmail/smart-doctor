@@ -53,8 +53,11 @@ export function isLocalhost(url) {
   }
 }
 
+// A loop rather than /\/+$/, which backtracks quadratically on a long run of slashes.
 export function stripTrailingSlash(url) {
-  return url.replace(/\/+$/, '');
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') end--;
+  return url.slice(0, end);
 }
 
 /**
