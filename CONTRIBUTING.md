@@ -53,6 +53,27 @@ Code style is enforced by Prettier and ESLint (`npm run format` fixes formatting
 
 Types are JSDoc comments, checked by TypeScript (`npm run typecheck`, also in CI). Shared shapes such as `RunOptions` live in [`src/types.js`](src/types.js); give new functions with option objects a `@param` type so editors can autocomplete them. Why JavaScript and not TypeScript files: what you read is exactly what runs (in the npm package, the binaries and the Action), and Node will not run `.ts` files from inside `node_modules`, so TypeScript sources would need a build step.
 
+## Labels
+
+The issue forms add the first labels. During triage a maintainer checks them, adds anything missing and removes `needs-triage`.
+
+| Label | When to use it |
+|---|---|
+| `bug` | Something doesn't work as documented: a crash, wrong output or a broken flag. |
+| `diagnosis` | smart-doctor named the wrong cause, or none, for a real login failure. |
+| `knowledge` | The fix is a change to error patterns, causes or fixes in `src/knowledge` or `src/vendors`. |
+| `vendor` | Behaviour specific to one EHR vendor. Add `knowledge` too when it becomes a hint. |
+| `enhancement` | A new feature or an improvement. |
+| `documentation` | The README, the website or other docs. |
+| `accessibility` | A barrier in the web view or the website for people with disabilities. |
+| `security` | Hardening that is safe to discuss in public. Vulnerabilities are reported privately ([SECURITY.md](SECURITY.md)), never in an issue. |
+| `needs-triage` | New: a maintainer hasn't looked at it yet. |
+| `needs-info` | Waiting for the reporter, usually for `--report` output. |
+| `good first issue` | Small and well scoped. Name the files involved in the issue. |
+| `help wanted` | A pull request would be welcome. The same items are marked in [ROADMAP.md](ROADMAP.md). |
+| `duplicate`, `invalid`, `wontfix` | Closing reasons: already reported (link the original); not a smart-doctor problem or can't be reproduced; out of scope (say why). |
+| `dependencies`, `javascript`, `github_actions`, `docker` | Added by Dependabot to its pull requests. |
+
 ## Safety is a feature
 
 smart-doctor handles private keys and secrets, so a few rules are non-negotiable and covered by tests:
