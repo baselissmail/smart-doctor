@@ -25,10 +25,11 @@ Especially in scope: anything that could leak a private key, client secret, toke
 | **Private key** | Read from the path you pass, used in-process to sign one test assertion. Never transmitted, written, logged or printed. Only the public key and its SHA-256 JWK thumbprint are ever shown. |
 | **Client assertion** (signed JWT) | Sent once to the token endpoint you specify — exactly what your app would send. Never printed (masked in every output). Lifetime ≤ 5 minutes; single-use via a random `jti`. |
 | **Access token** | Kept in memory only for the optional probe; masked in every output; never written to disk. |
-| **Client secret** | Read only from an environment variable (never from command-line flags, which shell history and `ps` capture) or typed into the local UI's password field for a single run. Sent only to the token endpoint. Never written, logged or printed; masked in the HTTP trace. |
+| **Client secret** | Read only from an environment variable (never from command-line flags, which shell history and `ps` capture) or typed into the local UI's password field for a single run. Sent only to the token endpoint. Never written, logged or printed, not even in part: masked in the HTTP trace and wherever a server echoes it back. |
 | **Authorization code, PKCE verifier, refresh/id tokens** | Kept in memory for the run; masked in every trace and report. |
 | **Profiles (`smart-doctor.yaml`)** | Hold *references* only: a key path and an environment-variable name. Saving a profile that contains a secret-looking field is refused. Safe to commit. |
 | **client_id** | Not a secret, but masked by `--report` and `--redact`. |
+| **Patient context** (patient, encounter, `fhirUser`) | Shown in your terminal so you can confirm the sign-in. Masked in `--report`, `--redact` and the report copied from the web UI. |
 | **Server responses** | Discovery documents and token-endpoint errors are shown. The optional `--probe` shows the HTTP status and content type only — never a response body. |
 
 ## The local web UI (`smart-doctor ui`)

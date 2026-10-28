@@ -16,6 +16,9 @@ export const SENSITIVE_KEYS = new Set([
   'assertion',
   'launch',
 ]);
+// Values that work on their own: no part of them is shown, not even a prefix.
+const NO_PREFIX = new Set(['client_secret', 'password', 'code_verifier']);
+const maskKey = (k, v, keep) => mask(v, NO_PREFIX.has(k) ? 0 : keep);
 const PRIVATE_JWK = new Set(['d', 'p', 'q', 'dp', 'dq', 'qi', 'oth', 'k']);
 const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
 const MAX_BODY = 4000;
@@ -24,7 +27,7 @@ export function redactUrl(raw) {
   try {
     const u = new URL(raw);
     for (const k of [...u.searchParams.keys()]) {
-      if (SENSITIVE_KEYS.has(k)) u.searchParams.set(k, mask(u.searchParams.get(k), 4));
+      if (SENSITIVE_KEYS.has(k)) u.searchParams.set(k, maskKey(k, u.searchParams.get(k), 4));
     }
     return u.toString();
   } catch {
@@ -51,7 +54,7 @@ function redactDeep(value, depth = 0) {
     const out = {};
     const isJwk = typeof value.kty === 'string';
     for (const [k, v] of Object.entries(value)) {
-      if (SENSITIVE_KEYS.has(k) && typeof v === 'string') out[k] = mask(v, 8);
+      if (SENSITIVE_KEYS.has(k) && typeof v === 'string') out[k] = maskKey(k, v, 8);
       else if (isJwk && PRIVATE_JWK.has(k)) out[k] = '[private key material masked]';
       else out[k] = redactDeep(v, depth + 1);
     }
@@ -66,7 +69,7 @@ export function redactBody(body, contentType = '') {
   const text = String(body);
   if (/x-www-form-urlencoded/i.test(contentType) || (/^[\w.%-]+=/.test(text) && !text.trim().startsWith('{'))) {
     const p = new URLSearchParams(text);
-    for (const k of [...p.keys()]) if (SENSITIVE_KEYS.has(k)) p.set(k, mask(p.get(k), 8));
+    for (const k of [...p.keys()]) if (SENSITIVE_KEYS.has(k)) p.set(k, maskKey(k, p.get(k), 8));
     return decodeURIComponent(p.toString().replace(/\+/g, ' '));
   }
   try {
@@ -75,6 +78,36 @@ export function redactBody(body, contentType = '') {
   } catch {
     return text.length > MAX_BODY ? text.slice(0, MAX_BODY) + `… [${text.length - MAX_BODY} more chars]` : text;
   }
+}
+
+/**
+ * The secret values a request carries: sensitive form fields (code, client_secret, assertion…)
+ * and the credentials in its Authorization header, so a response that echoes one can be masked.
+ * @param {unknown} body  the request body (form-encoded, or JSON which carries none of ours)
+ * @param {object} [headers]  request headers
+ * @returns {string[]}
+ */
+export function requestSecrets(body, headers = {}) {
+  const out = [];
+  if (typeof body === 'string' && !body.trim().startsWith('{')) {
+    for (const [k, v] of new URLSearchParams(body)) if (SENSITIVE_KEYS.has(k)) out.push(v);
+  }
+  const authz = Object.entries(headers || {}).find(([k]) => k.toLowerCase() === 'authorization')?.[1];
+  const m = /^(Basic|Bearer|DPoP)\s+(\S+)/i.exec(String(authz || ''));
+  if (m) {
+    out.push(m[2]);
+    if (/^basic$/i.test(m[1])) {
+      const pair = Buffer.from(m[2], 'base64').toString('utf8');
+      const secret = pair.slice(pair.indexOf(':') + 1); // the secret; the client id stays readable
+      out.push(secret);
+      try {
+        out.push(decodeURIComponent(secret)); // RFC 6749 form-encodes it before base64
+      } catch {
+        // not percent-encoded
+      }
+    }
+  }
+  return out;
 }
 
 /**
@@ -88,6 +121,6 @@ export function redactBody(body, contentType = '') {
 export function redactText(text, known = []) {
   if (!text) return text;
   let out = String(text);
-  for (const v of known) if (v && v.length >= 6) out = out.split(v).join(String(mask(v)));
+  for (const v of known) if (v && v.length >= 6) out = out.split(v).join(String(mask(v, 0)));
   return out.replace(/\beyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]*/g, (m) => String(mask(m)));
 }

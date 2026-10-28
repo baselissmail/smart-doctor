@@ -282,10 +282,15 @@ async function launchFlow(opts, run, { browser, prompter, signal }) {
 
   const ready = disc.authorizeUrl && disc.tokenUrl && key.ok && redirectOk && (mode === 'paste' || loop);
   let token;
-  if (ready) {
+  // tokenRequest false (--offline): everything up to the sign-in, which is never started.
+  if (ready && opts.tokenRequest !== false) {
     try {
       token = await authorizeAndExchange({ opts, run, mode, scope, scopes, disc, key, loop, browser, prompter, facts, signal });
       if (disc.serverDate?.cached && token?.serverDate) run.amend('clock', checkClock(token.serverDate).check);
+      // Who the sign-in was for: shown in the terminal, masked by --report and --redact.
+      const ctx = token?.token?.context || {};
+      const user = L.fhirUser ? /[A-Za-z]+\/[^/]+$/.exec(L.fhirUser)?.[0] : undefined;
+      meta.identifiers = [ctx.patient, ctx.encounter, L.fhirUser, user].filter(Boolean).map(String);
     } finally {
       loop?.close();
     }
@@ -643,6 +648,7 @@ async function checkIdToken(idToken, { clientId, disc, opts, scopes, facts }) {
     );
   }
   if (scopes.includes('fhirUser')) {
+    if (claims.fhirUser) facts.launch.fhirUser = String(claims.fhirUser);
     checks.push(
       claims.fhirUser
         ? check('context.fhir_user', 'fhirUser claim', STATUS.PASS, claims.fhirUser)

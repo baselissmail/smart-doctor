@@ -33,7 +33,7 @@
  * @property {boolean} [testRefresh]            Launch flow: false skips the refresh-token test.
  * @property {string} [secretEnv]               Name of the environment variable holding the secret.
  * @property {string} [secret]                  The client secret (from secretEnv; never from flags).
- * @property {boolean} [tokenRequest]           false = offline (local checks only).
+ * @property {boolean} [tokenRequest]           false = --offline: stop before the token request / sign-in.
  * @property {number} [timeoutMs]               Network timeout per request.
  * @property {string} [configPath]              The smart-doctor.yaml the options came from.
  */

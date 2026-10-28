@@ -5,10 +5,12 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { createPrivateKey } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import http from 'node:http';
 import { exportJWK } from 'jose';
 import { scenario, makeKey, topCause, causeIds, checkStatus, writeJson, tmp, CLIENT_ID } from './helpers.js';
 import { runCheck } from '../src/doctor.js';
 import { renderHuman, renderJson, renderMarkdown } from '../src/report.js';
+import { listen } from '../src/util.js';
 
 test('happy path: token obtained, verdict ok', async () => {
   const r = await scenario({ check: { scope: 'system/Patient.rs', probePath: 'Patient' } });
@@ -297,4 +299,42 @@ test('server only accepts post, client uses basic → secret causes incl. basic/
   const r = await secretScenario({ secret: 's3cr3t-value', client: { secretMethods: ['client_secret_post'] } });
   assert.equal(r.diagnosis.verdict, 'fail');
   assert.ok(causeIds(r).includes('secret_method'));
+});
+
+test('a secret the server echoes back reaches no output, not even in part', async () => {
+  const SECRET = 'Echoed-Secret-Value-1234';
+  for (const auth of ['client_secret_post', 'client_secret_basic']) {
+    const server = http.createServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        const base = `http://127.0.0.1:${port}`;
+        if (req.url.startsWith('/.well-known/smart-configuration')) {
+          res.writeHead(200, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ issuer: base, token_endpoint: `${base}/token`, token_endpoint_auth_methods_supported: [auth] }));
+        }
+        const basic = Buffer.from(String(req.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
+        const sent = new URLSearchParams(body).get('client_secret') || basic.slice(basic.indexOf(':') + 1);
+        res.writeHead(401, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'invalid_client', error_description: `client_secret ${sent} is not valid` }));
+      });
+    });
+    const port = await listen(server, 0, '127.0.0.1');
+    try {
+      const r = await runCheck({
+        fhirBase: `http://127.0.0.1:${port}`,
+        clientId: CLIENT_ID,
+        auth,
+        secret: SECRET,
+        scope: 'system/Patient.rs',
+      });
+      assert.equal(r.diagnosis.verdict, 'fail');
+      const outputs = [renderHuman(r), renderHuman(r, { verbose: true }), renderJson(r), renderJson(r, { redact: true })];
+      for (const text of [...outputs, renderMarkdown(r), renderMarkdown(r, { verbose: true })]) {
+        assert.ok(!text.includes(SECRET.slice(0, 6)), `${auth}: the secret leaked`);
+      }
+    } finally {
+      server.close();
+    }
+  }
 });
