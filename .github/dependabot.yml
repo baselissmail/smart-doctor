@@ -20,6 +20,10 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    ignore:
+      # Stay on Node's long-term-support line; move to the next LTS on purpose, not to odd-numbered releases.
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
