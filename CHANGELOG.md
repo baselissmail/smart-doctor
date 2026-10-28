@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.2 — 2026-10-28
 
+- **Security hardening** from CodeQL code scanning: trimming trailing slashes from URLs and reading an `Authorization: Basic` header no longer slow down quadratically on crafted input (ReDoS). Markdown reports escape backslashes, so a detail can no longer break out of its table cell. The practice EHR no longer returns internal error messages.
 - **Property-based tests (fuzzing)** with fast-check: `explain`, callback parsing, secret masking, error-code normalisation and scope parsing are exercised with thousands of generated inputs on every CI run.
+- OpenSSF Best Practices badge (passing).
 - `jose` 6.
 
 ## 0.2.1 — 2026-10-28
