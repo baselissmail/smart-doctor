@@ -1,6 +1,6 @@
 {
   "name": "smart-doctor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Find out why a SMART on FHIR login fails — backend services or user sign-in — locally, without your keys or secrets ever leaving your machine.",
   "keywords": [
     "fhir",
