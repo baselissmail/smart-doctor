@@ -18,7 +18,7 @@ export default [
   },
   {
     // The local web UI's page script and the Playwright smoke script's page callbacks run in the browser.
-    files: ['src/ui/**/*.js', 'scripts/ui-smoke.mjs', 'site/assets/**/*.js'],
+    files: ['src/ui/**/*.js', 'scripts/ui-smoke.mjs', 'scripts/readme-images.mjs', 'site/assets/**/*.js'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 ];

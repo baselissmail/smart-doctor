@@ -46,7 +46,7 @@ smart-doctor keeps its knowledge as data, so most changes don't touch the engine
 3. Run `npm run check`. CI runs the same on Linux, macOS and Windows with Node 22 and 24.
 4. Add a line under **Unreleased** in [CHANGELOG.md](CHANGELOG.md) if users will notice.
 5. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) (`fix(diagnose): …`, `feat(vendors): …`, `docs: …`).
-6. Open a pull request; the template has a short checklist.
+6. Open a pull request; the template has a short checklist. `main` only accepts pull requests that pass CI, and they are squash-merged, so your PR title becomes the commit message.
 
 Code style is enforced by Prettier and ESLint (`npm run format` fixes formatting). The code is plain JavaScript (ES modules) with no build step and very few dependencies — please keep it that way; a new runtime dependency needs a good reason.
 
