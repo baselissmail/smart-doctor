@@ -11,6 +11,7 @@
   <a href="https://www.npmjs.com/package/smart-doctor"><img alt="npm version" src="https://img.shields.io/npm/v/smart-doctor?color=0b7a6b&label=npm"></a>
   <a href="https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/baselissmail/smart-doctor"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/baselissmail/smart-doctor/badge"></a>
+  <a href="https://www.bestpractices.dev/projects/16012"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/16012/badge"></a>
   <a href="https://www.npmjs.com/package/smart-doctor"><img alt="Node.js 22 or newer" src="https://img.shields.io/node/v/smart-doctor?color=0b7a6b"></a>
   <a href="https://github.com/baselissmail/smart-doctor/blob/main/LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-0b7a6b"></a>
 </p>
