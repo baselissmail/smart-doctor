@@ -18,7 +18,7 @@ Releases are cut from `main` by pushing a version tag; GitHub Actions does the r
 
 1. Move the **Unreleased** entries in `CHANGELOG.md` under the new version with today's date.
 2. `npm version <patch|minor|major> --no-git-tag-version`, then set the same version in `src/version.js` and `.claude-plugin/plugin.json` (a test checks all three match). Open a pull request (`chore: release vX.Y.Z`), wait for CI, squash-merge.
-3. Tag the merged commit on `main`: `git pull && git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. Tag the merged commit on `main`: `git pull && git tag -m "smart-doctor X.Y.Z" vX.Y.Z && git push origin vX.Y.Z`. Pass `-m`: tags are signed, and a signed tag with no message opens an editor, which aborts if closed empty.
 4. The Release workflow checks the tag matches `package.json`, runs `npm run check`, builds and smoke-tests the binaries, creates the GitHub release with checksums, and publishes to npm with provenance.
-5. Move the GitHub Action's major tag so `uses: baselissmail/smart-doctor@v0` picks up the release: `git tag -f v0 && git push -f origin v0`.
+5. Move the GitHub Action's major tag so `uses: baselissmail/smart-doctor@v0` picks up the release: `git tag -f -m "v0 → smart-doctor X.Y.Z" v0 vX.Y.Z^{} && git push -f origin v0`.
 6. Check the release page, `npm view smart-doctor version`, and the website.
