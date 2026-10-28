@@ -1,7 +1,7 @@
 // Shared helpers: check records, masking, HTTP with timeouts.
 
 import { currentRun } from './core/run.js';
-import { redactUrl, redactHeaders, redactBody } from './core/redact.js';
+import { redactUrl, redactHeaders, redactBody, redactText, requestSecrets } from './core/redact.js';
 
 export const STATUS = Object.freeze({
   PASS: 'pass',
@@ -27,13 +27,13 @@ export function check(id, title, status, detail, fix, data) {
 
 /**
  * Mask a secret-ish string (tokens, assertions). Keeps a short prefix so two
- * values can still be told apart, never enough to be useful.
+ * values can still be told apart, never enough to be useful. keep = 0 shows none of it.
  */
 export function mask(value, keep = 8) {
   if (value == null) return value;
   const s = String(value);
   if (s.length <= keep) return '[masked]';
-  return `${s.slice(0, keep)}…[masked ${s.length} chars]`;
+  return keep ? `${s.slice(0, keep)}…[masked ${s.length} chars]` : `[masked ${s.length} chars]`;
 }
 
 /** Partially mask a client id (only used when --redact is set). */
@@ -69,6 +69,8 @@ export async function httpRequest(url, opts = {}) {
   const run = currentRun();
   if (run) {
     const reqCt = Object.entries(opts.headers || {}).find(([k]) => k.toLowerCase() === 'content-type')?.[1] || '';
+    // A server may echo what it was sent (error_description often does), wherever it sits in the body.
+    const sent = requestSecrets(opts.body, opts.headers);
     run.http({
       at: new Date(Date.now() - res.durationMs).toISOString(),
       label: opts.label,
@@ -83,7 +85,10 @@ export async function httpRequest(url, opts = {}) {
         : {
             status: res.status,
             headers: pickHeaders(res.headers),
-            body: opts.traceBody === false ? '[response body not recorded by design]' : redactBody(res.text, res.headers['content-type']),
+            body:
+              opts.traceBody === false
+                ? '[response body not recorded by design]'
+                : redactText(redactBody(res.text, res.headers['content-type']), sent),
           },
       durationMs: res.durationMs,
     });

@@ -7,6 +7,7 @@ import { createServer } from 'node:net';
 import { startMock } from '../src/mock/server.js';
 import { runLaunch, parseCallback, resolveRedirectMode, pkcePair } from '../src/launch.js';
 import { makeKey } from './helpers.js';
+import { renderHuman, renderJson, renderMarkdown } from '../src/report.js';
 import { fakeBrowser, pastePrompter } from './fake-browser.js';
 
 const APP = 'launch-app';
@@ -277,4 +278,25 @@ test('PKCE pair is RFC 7636 shaped', () => {
   const { verifier, challenge } = pkcePair();
   assert.match(verifier, /^[A-Za-z0-9_-]{43,128}$/);
   assert.match(challenge, /^[A-Za-z0-9_-]{43}$/);
+});
+
+test('offline stops before the sign-in', async () => {
+  const { r, browser } = await launch({ opts: { tokenRequest: false } });
+  assert.equal(r.diagnosis.verdict, 'offline', JSON.stringify(r.diagnosis.causes));
+  assert.equal(r.tokenRequested, false);
+  assert.equal(browser.visited.length, 0, 'the browser was never opened');
+  assert.ok(!r.http.some((x) => /^token/.test(x.label || '')), 'no token request');
+});
+
+test('patient and user ids reach the terminal but no shareable output', async () => {
+  const { r } = await launch();
+  const checks = r.sections.flatMap((s) => s.checks);
+  const patient = checks.find((c) => c.id === 'context.patient').detail.replace(/^patient /, '');
+  const user = /Practitioner\/[^/]+$/.exec(checks.find((c) => c.id === 'context.fhir_user').detail)[0];
+  assert.ok(renderHuman(r).includes(patient), 'shown locally, to confirm who signed in');
+  const shared = [renderMarkdown(r), renderMarkdown(r, { verbose: true }), renderJson(r, { redact: true })];
+  for (const text of [...shared, renderHuman(r, { redact: true, verbose: true })]) {
+    assert.ok(!text.includes(patient), 'patient id leaked');
+    assert.ok(!text.includes(user), 'fhirUser leaked');
+  }
 });

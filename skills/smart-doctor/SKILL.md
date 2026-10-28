@@ -42,7 +42,7 @@ smart-doctor check --fhir <FHIR base> --client-id <id> --key <path> --kid <kid> 
 smart-doctor check <profile> --report --verbose
 ```
 
-Variations: `--offline` (no token request) · `--aud <value>` (reproduce the app's aud) · `--auth client_secret_basic|client_secret_post` · `--vendor epic|oracle-health|openemr|athena` · `--show-public-jwk`.
+Variations: `--offline` (no token request or sign-in) · `--aud <value>` (reproduce the app's aud) · `--auth client_secret_basic|client_secret_post` · `--vendor epic|oracle-health|openemr|athena` · `--show-public-jwk`.
 
 ### User sign-in (SMART App Launch) fails
 

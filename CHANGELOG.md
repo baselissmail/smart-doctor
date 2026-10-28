@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: a client secret, code or token that the server echoed back (for example in `error_description`) showed in full in `--verbose` output and in `--json`, including `--json --redact`. The HTTP trace now masks every value the request carried, wherever it appears in the response.
+- Fixed: masked client secrets, passwords and PKCE verifiers no longer keep their first 8 characters, and neither do secrets masked inside server text. Tokens and codes keep a short prefix so two values can still be told apart.
+- Fixed: `--report` and `--redact` masked the client id but not the patient, encounter and `fhirUser` ids from a sign-in, which appeared in check details, the token response and the probe URL. Your terminal still shows them, so you can confirm who signed in.
+- Fixed: with `--redact`, a short client id was also masked inside other words (client id `app` turned `application/json` into `***lication/json`). Only whole values are masked now.
+- `--offline` now works for sign-in (launch). It runs every check up to the sign-in and never opens the browser. The CLI previously refused it, and the library API ignored `tokenRequest: false` and signed in anyway. Its description now says that discovery and the JWKS are still read.
+
 ## 0.2.2 — 2026-10-28
 
 - **Security hardening** from CodeQL code scanning: trimming trailing slashes from URLs and reading an `Authorization: Basic` header no longer slow down quadratically on crafted input (ReDoS). Markdown reports escape backslashes, so a detail can no longer break out of its table cell. The practice EHR no longer returns internal error messages.

@@ -66,7 +66,7 @@ check / launch options (override the profile)
   --jku                      (backend) Send the jku header pointing at --jwks-url
   --vendor <id>              Force a vendor profile: ${VENDORS.map((v) => v.id).join(', ')}
   --probe <path>             (backend) After a token, GET <fhir>/<path>; prints the status only
-  --offline                  Local checks only; no token request / sign-in
+  --offline                  Stop before the token request / sign-in (discovery and JWKS are still read)
   --save <name>              Save these settings as a profile
   --config <file>            Profiles file (default: nearest smart-doctor.yaml)
   --json | --report          JSON, or a Markdown report safe to paste into a ticket or AI chat
@@ -273,7 +273,6 @@ async function cmdCheck(args, io, forced) {
 
   let result;
   if (opts.flow === 'launch') {
-    if (opts.tokenRequest === false) throw new UsageError('--offline is not available for launch yet; it needs a real sign-in.');
     const browser = systemBrowser({
       print: (url) => {
         err('\nSign in at the EHR — your browser should open. If it does not, open this URL:');

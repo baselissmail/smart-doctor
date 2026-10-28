@@ -4,7 +4,7 @@
 
 import { check, STATUS, httpRequest, mask, stripTrailingSlash } from './util.js';
 import { serverDateFrom } from './clock.js';
-import { redactText, SENSITIVE_KEYS } from './core/redact.js';
+import { redactText, requestSecrets } from './core/redact.js';
 
 export const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 
@@ -113,13 +113,7 @@ export async function requestToken(o) {
   }
 
   // Failure. Server text goes into checks and reports, so mask anything of ours it echoes back.
-  const known = [...body].filter(([k]) => SENSITIVE_KEYS.has(k)).map(([, v]) => v);
-  const basic = /^Basic\s+(\S+)/i.exec(/** @type {Record<string, string>} */ (auth.headers || {}).authorization || '')?.[1];
-  if (basic) {
-    known.push(basic);
-    const pair = Buffer.from(basic, 'base64').toString('utf8');
-    known.push(pair.slice(pair.indexOf(':') + 1)); // the secret; the client id stays readable
-  }
+  const known = requestSecrets(body.toString(), auth.headers);
   outcome.error = res.json?.error;
   outcome.errorDescription = redactText(res.json?.error_description, known);
   if (!res.json) outcome.rawSnippet = redactText((res.text || '').slice(0, 300), known);

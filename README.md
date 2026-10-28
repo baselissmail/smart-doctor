@@ -131,7 +131,7 @@ Any flag overrides the profile: `smart-doctor check epic-sandbox --kid new-key-2
 | `keygen` | New RS384/ES384 key pair and public JWKS |
 | `mock` | Practice EHR with 18 failure modes (`--list-modes`) |
 
-Useful flags: `--verbose` (every HTTP request and response, secrets masked) · `--report` (paste-safe Markdown) · `--json` · `--offline` (local checks only) · `--aud` (reproduce your app's `aud`) · `--redirect-mode paste|loopback`. Run `smart-doctor --help` for everything.
+Useful flags: `--verbose` (every HTTP request and response, secrets masked) · `--report` (paste-safe Markdown) · `--json` · `--offline` (everything up to the token request or sign-in; discovery and the JWKS are still read) · `--aud` (reproduce your app's `aud`) · `--redirect-mode paste|loopback`. Run `smart-doctor --help` for everything.
 
 Exit codes: `0` works · `1` problems found · `2` usage error.
 

@@ -381,3 +381,19 @@ test('markdown report escapes backslashes before table pipes', () => {
     .find((l) => l.startsWith('| Key |'));
   assert.equal(row, '| Key | Key file | FAIL | C:\\\\keys\\\\ \\| end\\\\ |');
 });
+
+test('a secret masked with keep 0 shows no part of it', () => {
+  assert.equal(mask('abcdefghij', 0), '[masked 10 chars]');
+});
+
+test('redacting the client id masks whole values only', () => {
+  const result = {
+    meta: { flow: 'backend', clientId: 'app' },
+    sections: [{ name: 'FHIR access', checks: [{ title: 'Probe', status: 'pass', detail: 'client app · application/fhir+json' }] }],
+    diagnosis: { verdict: 'ok', causes: [] },
+  };
+  const row = renderMarkdown(result)
+    .split('\n')
+    .find((l) => l.startsWith('| FHIR access |'));
+  assert.equal(row, '| FHIR access | Probe | PASS | client *** · application/fhir+json |');
+});

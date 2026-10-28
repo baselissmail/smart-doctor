@@ -44,12 +44,19 @@ export function confidenceLabel(x) {
   return 'less likely';
 }
 
-/** Replace every occurrence of the client id in free text when redacting. */
+/**
+ * When redacting, mask the client id and the patient, encounter and user ids a sign-in returned,
+ * wherever they appear (check details, the token response, the probe URL).
+ */
 function scrubber(meta, redact) {
-  if (!redact || !meta?.clientId) return (t) => t;
-  const id = String(meta.clientId);
-  const r = redactId(id);
-  return (t) => (typeof t === 'string' ? t.split(id).join(r) : t);
+  if (!redact) return (t) => t;
+  const swap = new Map((meta?.identifiers || []).map((v) => [String(v), '[masked id]']));
+  if (meta?.clientId) swap.set(String(meta.clientId), redactId(meta.clientId));
+  if (!swap.size) return (t) => t;
+  const alts = [...swap.keys()].sort((a, b) => b.length - a.length).map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  // Whole values only: a client id "app" must not mask the "app" in "application/json".
+  const re = new RegExp(`(?<![\\w.-])(?:${alts.join('|')})(?![\\w.-])`, 'g');
+  return (t) => (typeof t === 'string' ? t.replace(re, (m) => swap.get(m) ?? m) : t);
 }
 
 function safeMeta(meta, redact) {
@@ -99,7 +106,7 @@ function sectionLines(sections, p, sc = (/** @type {string} */ s) => s) {
   for (const s of sections) {
     lines.push(p.bold(s.name));
     for (const c of s.checks) {
-      lines.push(`  ${p.status(c.status, ICON[c.status] || '?')} ${c.title}${c.detail ? p.dim(' — ') + sc(c.detail) : ''}`);
+      lines.push(`  ${p.status(c.status, ICON[c.status] || '?')} ${sc(c.title)}${c.detail ? p.dim(' — ') + sc(c.detail) : ''}`);
       if (c.fix && (c.status === STATUS.FAIL || c.status === STATUS.WARN)) lines.push(`      ${p.dim('fix:')} ${c.fix}`);
     }
     lines.push('');
@@ -210,7 +217,7 @@ export function renderMarkdown(result, { redact = true, verbose = false } = {}) 
   for (const s of result.sections) {
     for (const c of s.checks) {
       out.push(
-        `| ${s.name} | ${c.title} | ${c.status.toUpperCase()} | ${sc(c.detail || '')
+        `| ${s.name} | ${sc(c.title)} | ${c.status.toUpperCase()} | ${sc(c.detail || '')
           .replace(/\\/g, '\\\\')
           .replace(/\|/g, '\\|')
           .replace(/\n/g, ' ')} |`,
@@ -234,6 +241,8 @@ export function renderMarkdown(result, { redact = true, verbose = false } = {}) 
     out.push('</details>');
   }
   out.push('');
-  out.push('_No private keys, client secrets, authorization codes, assertions, or tokens are included in this report._');
+  out.push(
+    '_No private keys, client secrets, authorization codes, assertions, tokens or patient identifiers are included in this report._',
+  );
   return out.join('\n');
 }
