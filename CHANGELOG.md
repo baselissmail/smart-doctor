@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.3 — 2026-10-28
 
 - Fixed: a client secret, code or token that the server echoed back (for example in `error_description`) showed in full in `--verbose` output and in `--json`, including `--json --redact`. The HTTP trace now masks every value the request carried, wherever it appears in the response.
 - Fixed: masked client secrets, passwords and PKCE verifiers no longer keep their first 8 characters, and neither do secrets masked inside server text. Tokens and codes keep a short prefix so two values can still be told apart.
