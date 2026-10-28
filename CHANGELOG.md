@@ -2,6 +2,7 @@
 
 ## 0.2.1 — 2026-10-28
 
+- Release files now include signed build provenance (`provenance-*.sigstore.json`); the Docker image is pinned to a digest.
 - **Repository standards**: `main` and release tags protected by rulesets (pull requests, required CI, linear history, signed commits), CodeQL code scanning, OpenSSF Scorecard, every workflow action pinned to a commit, build attestations for release binaries.
 - README rewritten for GitHub and npm, with images generated from real runs (`scripts/readme-images.mjs`).
 
