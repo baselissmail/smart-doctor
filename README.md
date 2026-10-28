@@ -1,10 +1,33 @@
-# smart-doctor
+<p align="center">
+  <a href="https://baselissmail.github.io/smart-doctor/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/baselissmail/smart-doctor/main/docs/images/banner-dark.png">
+      <img src="https://raw.githubusercontent.com/baselissmail/smart-doctor/main/docs/images/banner-light.png" width="880" alt="smart-doctor shows a SMART on FHIR login as a heartbeat: discovery, clock and the client assertion pass, the token request flatlines with invalid_client, and the most likely cause is named: your kid is not in the JWKS the server knows about.">
+    </picture>
+  </a>
+</p>
 
-[![CI](https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/smart-doctor)](https://www.npmjs.com/package/smart-doctor)
-[![License: MIT](https://img.shields.io/badge/license-MIT-0b7a6b)](LICENSE)
+<p align="center">
+  <a href="https://www.npmjs.com/package/smart-doctor"><img alt="npm version" src="https://img.shields.io/npm/v/smart-doctor?color=0b7a6b&label=npm"></a>
+  <a href="https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/baselissmail/smart-doctor/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/baselissmail/smart-doctor"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/baselissmail/smart-doctor/badge"></a>
+  <a href="https://www.npmjs.com/package/smart-doctor"><img alt="Node.js 22 or newer" src="https://img.shields.io/node/v/smart-doctor?color=0b7a6b"></a>
+  <a href="https://github.com/baselissmail/smart-doctor/blob/main/LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-0b7a6b"></a>
+</p>
 
-**Find out why a SMART on FHIR login fails — backend services or user sign-in — in seconds, without your keys or secrets ever leaving your machine.**
+<p align="center">
+  <strong>Find out why a SMART on FHIR login fails</strong>, for backend services or user sign-in,<br>
+  in seconds, with your keys and secrets never leaving your machine.
+</p>
+
+<p align="center">
+  <a href="https://baselissmail.github.io/smart-doctor/">Website</a> ·
+  <a href="https://baselissmail.github.io/smart-doctor/errors/">Error catalogue</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="https://github.com/baselissmail/smart-doctor/blob/main/CONTRIBUTING.md">Contributing</a>
+</p>
+
+---
 
 EHR token endpoints answer almost every client problem with the same thing:
 
@@ -12,64 +35,63 @@ EHR token endpoints answer almost every client problem with the same thing:
 { "error": "invalid_client" }
 ```
 
-That's deliberate (servers shouldn't tell attackers what went wrong), so you're left guessing: wrong `aud`? `kid` not published? JWKS unreachable? clock skew? client ID from the wrong environment? redirect URI not registered *exactly*? authorization code already used?
+That's deliberate: servers shouldn't tell attackers what went wrong. So you're left guessing. Is `aud` wrong? Is the `kid` not published, or the JWKS unreachable? Is your clock off? Is the client ID from the wrong environment, or the redirect URI not registered *exactly*? Was the authorization code already used?
 
-`smart-doctor` checks everything that can be checked from your side, runs the real login once, and ranks the likely causes in plain English — in the terminal, or in a local web view.
+**smart-doctor checks everything that can be checked from your side, runs the real login once, and ranks the likely causes in plain English**, with the evidence and the exact next step.
 
-**Website and error catalogue:** <https://baselissmail.github.io/smart-doctor/> — every cause it can report, what it means and how to fix it.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/baselissmail/smart-doctor/main/docs/images/terminal.png" width="760" alt="Terminal output of smart-doctor check: key, discovery and clock pass; the JWKS check finds that kid typo-kid is not published; the token request fails with HTTP 401 invalid_client; the most likely cause is that the kid is not in the JWKS the server knows about, with the fix.">
+</p>
 
-```
-Most likely causes
-  1. aud does not exactly match the token endpoint (very likely)
-     The assertion's aud must be the token endpoint URL, character for character…
-     evidence: aud "https://ehr.example.org/oauth2/token/" ≠ token endpoint … — trailing slash differs.
-     fix: Set aud to the exact token_endpoint string from the SMART configuration.
-```
-
-## Two minutes, no accounts: try it against the practice EHR
+## Quick start
 
 ```bash
-npx smart-doctor ui --demo                  # the web view + a practice EHR that fails on purpose
+npx smart-doctor ui --demo          # practise first: a web view with a practice EHR that fails on purpose
+npx smart-doctor init               # your server: a few questions, everything else is discovered
+npx smart-doctor check my-profile   # run it any time
 ```
 
-Or in the terminal:
+Needs Node.js 22 or newer. No Node? Use a [standalone binary](https://github.com/baselissmail/smart-doctor/releases) for macOS, Linux or Windows.
 
-```bash
-npx smart-doctor mock --write-profiles      # terminal 1: a practice EHR + demo profiles
-npx smart-doctor check demo-backend         # terminal 2
-npx smart-doctor check demo-launch          # a real sign-in flow in your browser
-```
-
-## Your own server
-
-```bash
-npx smart-doctor init                # asks ~6 questions, discovers the rest, saves a profile
-npx smart-doctor check my-profile
-```
-
-Install it globally with `npm install -g smart-doctor` to type `smart-doctor` directly, or download a standalone binary (no Node needed) — see [Install](#install).
-
-## What it covers
+## What it checks
 
 | Flow | Client authentication | What it checks |
 |---|---|---|
-| **Backend services** (system-to-system, `client_credentials`) | `private_key_jwt`, `client_secret_basic`, `client_secret_post` | key/secret · discovery · clock · JWKS (reachable, kid, **published key = your key**, **private-key leaks**) · assertion (aud, exp ≤ 5 min, jti, kid, iss/sub) · token · granted scopes · optional status-only FHIR probe |
-| **User sign-in** (SMART App Launch, standalone, `authorization_code` + PKCE) | public (PKCE only), client secret, private key | discovery (authorize endpoint, S256, capabilities) · **redirect URI** · sign-in · `state` and `iss` · code exchange · patient context · `id_token` signature, `aud`, `fhirUser` · refresh token · status-only FHIR probe |
+| **Backend services**<br>`client_credentials` | `private_key_jwt`, `client_secret_basic`, `client_secret_post` | key or secret · discovery · clock · JWKS (reachable, your `kid`, **the published key is yours**, **no private-key leaks**) · assertion (`aud`, `exp` ≤ 5 min, `jti`, `kid`, `iss`/`sub`) · the real token request · granted scopes · optional FHIR call (status only) |
+| **User sign-in**<br>SMART App Launch, `authorization_code` + PKCE | public (PKCE only), client secret, private key | discovery (authorize endpoint, S256, capabilities) · **your redirect URI** · sign-in · `state` and `iss` · code exchange · patient context · `id_token` signature, `aud`, `fhirUser` · refresh token · optional FHIR call (status only) |
 
-Vendor quirk profiles add hints for **Epic, Oracle Health (Cerner), OpenEMR and athenahealth**.
+When the server still refuses after every local check passes, smart-doctor reads the server's own words, adds vendor hints (Epic, Oracle Health, athenahealth, OpenEMR) and names the server-side causes it cannot see, so you know exactly what to ask your EHR contact. Every cause is explained in the [error catalogue](https://baselissmail.github.io/smart-doctor/errors/).
 
-### Redirect URIs your company already registered
+## The same, in your browser
 
-You don't have to change any registration to test a user sign-in:
+<p align="center">
+  <img src="https://raw.githubusercontent.com/baselissmail/smart-doctor/main/docs/images/web-view.png" width="880" alt="The local web view after a failing run: a heartbeat trace beats for key, discovery and clock, then turns red and flatlines at JWKS; the verdict reads 'The login breaks at JWKS', with the most likely cause, its evidence and the fix, next to a table of every check.">
+</p>
 
-- **`http://localhost:PORT/…` or `http://127.0.0.1:PORT/…`** → smart-doctor listens on exactly that address and catches the redirect itself.
-- **Anything else** (`https://app.yourcompany.com/smart/callback`) → you sign in, your browser lands on that page (even an error page is fine), you paste the address back. smart-doctor validates `state`, exchanges the code with PKCE and carries on.
+`smart-doctor ui` opens a local web view: pick a profile, run it, watch the trace, and copy a ticket-ready report. It binds to `127.0.0.1` only, needs a per-session token and makes no third-party requests.
 
-If the company page is a live app that exchanges the code itself, smart-doctor tells you the code was already used and why.
+## Highlights
+
+- **Ranked causes, not just errors.** Local checks first, then the server's own wording (including non-standard spellings like `Invalid Grant`), then vendor knowledge, each with evidence and a fix.
+- **Works with the redirect URI your company already registered.** `http://localhost:PORT` redirects are caught directly; for anything else you sign in, land on your company's page and paste its address back. No registration changes.
+- **Safe to share.** `--report` writes Markdown for a ticket, a vendor or an AI chat, with the client ID, tokens, codes and secrets masked.
+- **Practice before production.** A built-in practice EHR with 18 failure modes, and profiles in a git-friendly `smart-doctor.yaml` that refuses to hold secrets.
+- **Built for CI.** A GitHub Action runs your profile every night and catches expiring keys and registration drift before production does.
+- **Checked against real servers.** 16 deliberate breakages against the public SMART launcher give the right diagnosis (`npm run smoke:sandbox`).
+
+## Install
+
+| You have | Do |
+|---|---|
+| Node.js 22+ | `npx smart-doctor …`, or `npm install --global smart-doctor` |
+| No Node.js | Download the binary for your OS from [Releases](https://github.com/baselissmail/smart-doctor/releases), with checksums and [build attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations) (`gh attestation verify <file> --repo baselissmail/smart-doctor`) |
+| Docker | `docker build -t smart-doctor https://github.com/baselissmail/smart-doctor.git && docker run --rm -v "$PWD:/work" smart-doctor check my-profile` |
+| GitHub Actions | [Nightly monitoring](#nightly-monitoring) |
+| Claude Code | `/plugin marketplace add baselissmail/smart-doctor`, then `/plugin install smart-doctor@smart-doctor`. The skill passes keys by path only and shares `--report` output |
 
 ## Profiles
 
-Profiles live in `smart-doctor.yaml` (nearest one up from the current folder, or `~/.config/smart-doctor/`). **They never contain secrets** — keys by path, secrets by environment-variable name — so you can commit them and share with your team. Writing a secret into a profile is refused.
+Profiles live in `smart-doctor.yaml` (the nearest one up from the current folder, or `~/.config/smart-doctor/`). **They never contain secrets**: keys are referenced by path and secrets by environment-variable name, so you can commit them and share them with your team. Writing a secret into a profile is refused.
 
 ```yaml
 profiles:
@@ -92,7 +114,8 @@ profiles:
 
 Any flag overrides the profile: `smart-doctor check epic-sandbox --kid new-key-2 --verbose`. Save a one-off command as a profile with `--save <name>`.
 
-## Commands
+<details>
+<summary><strong>All commands and flags</strong></summary>
 
 | Command | Does |
 |---|---|
@@ -103,24 +126,17 @@ Any flag overrides the profile: `smart-doctor check epic-sandbox --kid new-key-2
 | `ui` | Local web view (`--demo` adds the practice EHR) |
 | `profiles` | List profiles |
 | `explain '<error>'` | Explain an error message you already have |
-| `inspect <jwt>` | Lint a client assertion from your app's logs (no key needed; signature never printed) |
-| `keygen` | New RS384/ES384 key pair + public JWKS |
+| `inspect <jwt>` | Lint a client assertion from your app's logs (no key needed; the signature is never printed) |
+| `keygen` | New RS384/ES384 key pair and public JWKS |
 | `mock` | Practice EHR with 18 failure modes (`--list-modes`) |
 
-Useful flags: `--verbose` (every HTTP request and response, secrets masked) · `--report` (Markdown safe to paste into a ticket or AI chat) · `--json` · `--offline` (local checks only) · `--aud` (reproduce your app's aud) · `--redirect-mode paste|loopback`. Run `smart-doctor --help` for all.
+Useful flags: `--verbose` (every HTTP request and response, secrets masked) · `--report` (paste-safe Markdown) · `--json` · `--offline` (local checks only) · `--aud` (reproduce your app's `aud`) · `--redirect-mode paste|loopback`. Run `smart-doctor --help` for everything.
 
 Exit codes: `0` works · `1` problems found · `2` usage error.
 
-## Install
+</details>
 
-| You have | Do |
-|---|---|
-| Node.js 22+ | `npx smart-doctor …`, or `npm install -g smart-doctor` |
-| No Node.js | Download the binary for your OS from [Releases](https://github.com/baselissmail/smart-doctor/releases) (checksums included), or build it: `npm run build:binaries` → `dist/` |
-| Docker | `docker build -t smart-doctor . && docker run --rm -v "$PWD:/work" smart-doctor check my-profile` |
-| CI / monitoring | The GitHub Action: see below |
-
-### Nightly monitoring (catch expiring keys before production does)
+## Nightly monitoring
 
 ```yaml
 # .github/workflows/smart-login.yml
@@ -129,7 +145,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4          # contains smart-doctor.yaml and the key path
+      - uses: actions/checkout@v5         # contains smart-doctor.yaml and the key path
       - uses: baselissmail/smart-doctor@v0
         with: { profile: epic-prod-backend }
         env: { OUR_APP_SECRET: '${{ secrets.OUR_APP_SECRET }}' }
@@ -137,37 +153,32 @@ jobs:
 
 The report lands in the job summary; the job fails when the login does.
 
-## Use it from Claude Code (or another AI agent)
-
-This repo is a Claude Code plugin with a `smart-doctor` skill: `/plugin marketplace add baselissmail/smart-doctor` then `/plugin install smart-doctor@smart-doctor`. The skill tells the agent to pass keys **by path only**, never read or print them, and to share `--report` output.
-
 ## Safety model
 
-- Keys are used in-process to sign one test assertion — never sent, logged or printed. Secrets come only from environment variables (or a password field in the local UI, kept in memory for one run).
+- Your private key signs one test assertion in-process. It is never sent, written, logged or printed. Secrets come only from environment variables, or a password field in the local web view kept in memory for one run.
 - What goes to the EHR is exactly what your app sends anyway.
-- Every HTTP exchange is redacted **inside the engine** before any front-end sees it: assertions, secrets, authorization codes, PKCE verifiers, access/refresh/id tokens. Tests enforce this.
-- The FHIR probe records the status code only — never a response body — so no patient data can reach a report.
-- The local UI binds 127.0.0.1 only, requires a per-session token, rejects foreign `Host` headers, sets a strict CSP and makes no third-party requests (fonts are bundled).
-- No telemetry.
+- Every HTTP exchange is redacted **inside the engine** before any front-end sees it: assertions, secrets, authorization codes, PKCE verifiers and access, refresh and id tokens. Server error text is masked too. Tests enforce all of it.
+- The FHIR call records the status code only, never a response body, so no patient data can reach a report.
+- No telemetry, no account, no cloud.
 
-Details: [SECURITY.md](SECURITY.md). How it's built: [ARCHITECTURE.md](ARCHITECTURE.md). How to test it: [TESTING.md](TESTING.md).
+Details: [SECURITY.md](https://github.com/baselissmail/smart-doctor/blob/main/SECURITY.md) · how it's built: [ARCHITECTURE.md](https://github.com/baselissmail/smart-doctor/blob/main/ARCHITECTURE.md) · how it's tested: [TESTING.md](https://github.com/baselissmail/smart-doctor/blob/main/TESTING.md).
 
 ## Limitations
 
 - It cannot see the server's registration. When every local check passes and the server still refuses, it ranks the remaining server-side causes; it can't prove which one.
-- Vendor profiles are hints from public documentation and community reports — every installation is configured differently.
-- Not covered yet: EHR launch from inside the EHR (only standalone launch), SMART on FHIR v1-only quirks beyond scope syntax, mutual TLS, DPoP.
-- A diagnostic aid, not certification — use [Inferno](https://inferno.healthit.gov/) for conformance.
+- Vendor hints come from public documentation and community reports; every installation is configured differently.
+- Not covered yet: EHR launch (launching from inside the EHR), mutual TLS, DPoP. See the [roadmap](https://github.com/baselissmail/smart-doctor/blob/main/ROADMAP.md).
+- A diagnostic aid, not certification: use [Inferno](https://inferno.healthit.gov/) for conformance.
 
 ## Contributing
 
-Every login failure someone figured out the hard way is worth teaching smart-doctor, and most contributions are a few lines of data plus a test: a server's error message, a vendor quirk with a public source, a clearer fix. Start with [CONTRIBUTING.md](CONTRIBUTING.md); the [roadmap](ROADMAP.md) lists bigger pieces marked *help wanted*.
+Every login failure someone figured out the hard way is worth teaching smart-doctor, and most contributions are a few lines of data plus a test: a server's error message, a vendor quirk with a public source, a clearer fix. Start with [CONTRIBUTING.md](https://github.com/baselissmail/smart-doctor/blob/main/CONTRIBUTING.md); the [roadmap](https://github.com/baselissmail/smart-doctor/blob/main/ROADMAP.md) lists bigger pieces marked *help wanted*.
 
-- Questions and ideas: [Discussions](https://github.com/baselissmail/smart-doctor/discussions) · getting help: [SUPPORT.md](SUPPORT.md)
+- Questions and ideas: [Discussions](https://github.com/baselissmail/smart-doctor/discussions) · getting help: [SUPPORT.md](https://github.com/baselissmail/smart-doctor/blob/main/SUPPORT.md)
 - Wrong diagnosis? [Tell us](https://github.com/baselissmail/smart-doctor/issues/new/choose) with your `--report` output.
-- Security problems: privately, as described in [SECURITY.md](SECURITY.md).
-- Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Security problems: privately, as described in [SECURITY.md](https://github.com/baselissmail/smart-doctor/blob/main/SECURITY.md).
+- Everyone taking part follows the [Code of Conduct](https://github.com/baselissmail/smart-doctor/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-MIT © Basel Issmail. Not affiliated with HL7, SMART Health IT or any EHR vendor; vendor names are trademarks of their owners.
+[MIT](https://github.com/baselissmail/smart-doctor/blob/main/LICENSE) © Basel Issmail. Not affiliated with HL7, SMART Health IT or any EHR vendor; vendor names are trademarks of their owners.

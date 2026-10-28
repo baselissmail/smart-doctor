@@ -1,7 +1,7 @@
 {
   "name": "smart-doctor",
-  "version": "0.2.0",
-  "description": "Find out why a SMART on FHIR login fails \u2014 backend services or user sign-in \u2014 locally, without your keys or secrets ever leaving your machine.",
+  "version": "0.2.1",
+  "description": "Find out why a SMART on FHIR login fails — backend services or user sign-in — locally, without your keys or secrets ever leaving your machine.",
   "keywords": [
     "fhir",
     "smart-on-fhir",

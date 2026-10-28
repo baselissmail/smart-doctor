@@ -1,6 +1,6 @@
 {
   "name": "smart-doctor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Diagnose failing SMART on FHIR logins — backend services and user sign-in — without exposing keys, secrets or tokens.",
   "author": {
     "name": "Basel Issmail"

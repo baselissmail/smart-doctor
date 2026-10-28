@@ -7,7 +7,7 @@ smart-doctor diagnoses failing SMART on FHIR logins: backend services (`client_c
 - **Never read, print or copy private keys (`*.pem`, `*.key`, `private-key*`), client secrets or tokens.** Pass key files by path; secrets come from environment variables only.
 - No real organisation's keys, client IDs, tenant IDs, endpoints or names, and no patient data — in code, tests, docs, commit messages or issues. Use the practice EHR (`src/mock/server.js`) or public sandboxes.
 - Vendor hints need a public `source` (see CONTRIBUTING.md).
-- Conventional commits. Don't push, tag or publish unless a maintainer asks.
+- Conventional commits, through pull requests: `main` is protected (required CI, linear history, signed squash merges). Don't push, tag or publish unless a maintainer asks.
 
 ## Orientation
 

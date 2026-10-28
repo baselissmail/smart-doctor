@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-10-28
+
+- **Repository standards**: `main` and release tags protected by rulesets (pull requests, required CI, linear history, signed commits), CodeQL code scanning, OpenSSF Scorecard, every workflow action pinned to a commit, build attestations for release binaries.
+- README rewritten for GitHub and npm, with images generated from real runs (`scripts/readme-images.mjs`).
 
 - **Type checking**: TypeScript checks the JSDoc types (`npm run typecheck`, in `npm run check` and CI). Shared option types in `src/types.js`.
 - Servers report a busy port as an error instead of crashing (shared `listen` helper).
