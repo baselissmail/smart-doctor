@@ -8,7 +8,8 @@ import { checkClock, serverDateFrom } from '../src/clock.js';
 import { explainError, scopeSyntax, diagnose, normalizeError } from '../src/diagnose.js';
 import { detectVendor } from '../src/vendors/index.js';
 import { tokenUrlFromCapabilityStatement } from '../src/discovery.js';
-import { mask, redactId } from '../src/util.js';
+import { mask, redactId, stripTrailingSlash } from '../src/util.js';
+import { renderMarkdown } from '../src/report.js';
 import { checkSecret, clientAuthParams } from '../src/clientauth.js';
 import { requestToken } from '../src/token.js';
 import { listen } from '../src/util.js';
@@ -359,4 +360,24 @@ test('masking', () => {
   assert.equal(mask('short'), '[masked]');
   assert.match(mask('abcdefghijklmnop'), /^abcdefgh…\[masked 16 chars\]$/);
   assert.equal(redactId('my-client-id-123'), 'my-***123');
+});
+
+test('stripTrailingSlash is linear on a long run of slashes', () => {
+  assert.equal(stripTrailingSlash('https://ehr.example/fhir///'), 'https://ehr.example/fhir');
+  assert.equal(stripTrailingSlash('///'), '');
+  const start = performance.now();
+  assert.equal(stripTrailingSlash('/'.repeat(100_000) + 'x').length, 100_001);
+  assert.ok(performance.now() - start < 100);
+});
+
+test('markdown report escapes backslashes before table pipes', () => {
+  const result = {
+    meta: { flow: 'backend', clientId: 'c' },
+    sections: [{ name: 'Key', checks: [{ title: 'Key file', status: 'fail', detail: 'C:\\keys\\ | end\\' }] }],
+    diagnosis: { verdict: 'failed', causes: [] },
+  };
+  const row = renderMarkdown(result)
+    .split('\n')
+    .find((l) => l.startsWith('| Key |'));
+  assert.equal(row, '| Key | Key file | FAIL | C:\\\\keys\\\\ \\| end\\\\ |');
 });

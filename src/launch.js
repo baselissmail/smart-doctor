@@ -19,7 +19,7 @@ import { checkClock } from './clock.js';
 import { buildAssertion } from './assertion.js';
 import { requestToken, probe } from './token.js';
 import { detectVendor } from './vendors/index.js';
-import { check, STATUS, httpRequest, mask } from './util.js';
+import { check, STATUS, httpRequest, mask, stripTrailingSlash } from './util.js';
 import { Run, withRun } from './core/run.js';
 import { inferAuth, checkSecret, clientAuthParams, AUTH_METHODS } from './clientauth.js';
 import { isLoopbackUrl, startLoopback, LoopbackError } from './loopback.js';
@@ -445,8 +445,8 @@ async function authorizeAndExchange({ opts, run, mode, scope, scopes, disc, key,
   }
   step.add(check('authorize.state', 'state matches', STATUS.PASS));
   if (cb.iss) {
-    const expected = [disc.config?.issuer, opts.fhirBase].filter(Boolean).map((x) => x.replace(/\/+$/, ''));
-    if (expected.includes(cb.iss.replace(/\/+$/, ''))) step.add(check('authorize.iss', 'iss matches the server', STATUS.PASS, cb.iss));
+    const expected = [disc.config?.issuer, opts.fhirBase].filter(Boolean).map(stripTrailingSlash);
+    if (expected.includes(stripTrailingSlash(cb.iss))) step.add(check('authorize.iss', 'iss matches the server', STATUS.PASS, cb.iss));
     else {
       L.issMismatch = true;
       step.add(

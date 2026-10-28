@@ -211,6 +211,7 @@ export function renderMarkdown(result, { redact = true, verbose = false } = {}) 
     for (const c of s.checks) {
       out.push(
         `| ${s.name} | ${c.title} | ${c.status.toUpperCase()} | ${sc(c.detail || '')
+          .replace(/\\/g, '\\\\')
           .replace(/\|/g, '\\|')
           .replace(/\n/g, ' ')} |`,
       );

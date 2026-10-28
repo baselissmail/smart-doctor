@@ -2,7 +2,7 @@
 // Only the signed, short-lived, single-use assertion is sent — exactly what
 // your app sends anyway. The private key never leaves this process.
 
-import { check, STATUS, httpRequest, mask } from './util.js';
+import { check, STATUS, httpRequest, mask, stripTrailingSlash } from './util.js';
 import { serverDateFrom } from './clock.js';
 import { redactText, SENSITIVE_KEYS } from './core/redact.js';
 
@@ -114,7 +114,7 @@ export async function requestToken(o) {
 
   // Failure. Server text goes into checks and reports, so mask anything of ours it echoes back.
   const known = [...body].filter(([k]) => SENSITIVE_KEYS.has(k)).map(([, v]) => v);
-  const basic = /^Basic\s+(.+)$/i.exec(/** @type {Record<string, string>} */ (auth.headers || {}).authorization || '')?.[1];
+  const basic = /^Basic\s+(\S+)/i.exec(/** @type {Record<string, string>} */ (auth.headers || {}).authorization || '')?.[1];
   if (basic) {
     known.push(basic);
     const pair = Buffer.from(basic, 'base64').toString('utf8');
@@ -137,7 +137,7 @@ export async function requestToken(o) {
  * patient data can leak into reports even if pointed at a clinical resource.
  */
 export async function probe({ fhirBase, path = 'metadata', accessToken, timeoutMs }) {
-  const url = `${fhirBase.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+  const url = `${stripTrailingSlash(fhirBase)}/${path.replace(/^\/+/, '')}`;
   const res = await httpRequest(url, {
     headers: { authorization: `Bearer ${accessToken}`, accept: 'application/fhir+json' },
     traceBody: false,
