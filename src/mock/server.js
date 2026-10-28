@@ -510,7 +510,8 @@ export async function startMock(opts = {}) {
 
       return send(404, { error: 'not found' });
     } catch (e) {
-      return send(500, { error: 'server_error', error_description: String(e?.message || e) });
+      log(`error: ${e?.message || e}`);
+      return send(500, { error: 'server_error' });
     }
   });
 
