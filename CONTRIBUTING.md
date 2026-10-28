@@ -29,6 +29,7 @@ smart-doctor keeps its knowledge as data, so most changes don't touch the engine
 | Reword an explanation or fix | [`src/knowledge/causes.js`](src/knowledge/causes.js) | the website and reports pick it up automatically |
 | Add a new cause | `causes.js` for the words, [`src/diagnose.js`](src/diagnose.js) for when it applies | a unit test in `test/unit.test.js`, or an end-to-end test below |
 | Reproduce a new failure end to end | add a mode to `MODES` in [`src/mock/server.js`](src/mock/server.js) | `test/integration.test.js` (backend) or `test/launch.test.js` (sign-in) asserting the top cause |
+| Harden code that parses untrusted input | a property in [`test/properties.test.js`](test/properties.test.js) ([fast-check](https://fast-check.dev/)) | `npm test` runs it with hundreds of generated inputs |
 | Check against a real public server | a scenario in [`scripts/sandbox-smoke.mjs`](scripts/sandbox-smoke.mjs) | `npm run smoke:sandbox` |
 | Change the CLI, web UI or a flow | see [ARCHITECTURE.md](ARCHITECTURE.md) first | tests next to the existing ones |
 

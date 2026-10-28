@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Property-based tests (fuzzing)** with fast-check: `explain`, callback parsing, secret masking, error-code normalisation and scope parsing are exercised with thousands of generated inputs on every CI run.
+- `jose` 6.
+
 ## 0.2.1 — 2026-10-28
 
 - Release files now include signed build provenance (`provenance-*.sigstore.json`); the Docker image is pinned to a digest.
