@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.4 — 2026-11-06
 
 - `--help`, the web view's copy message, the website and the docs now say that `--redact` and shared reports also mask patient and user IDs.
 - Documentation counts corrected: 25 demo scenarios (21 broken on purpose), 16 sandbox scenarios (12 deliberate breakages), 18 practice-EHR failure modes, CI on Node 22 and 24.
