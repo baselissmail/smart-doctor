@@ -300,3 +300,24 @@ test('patient and user ids reach the terminal but no shareable output', async ()
     assert.ok(!text.includes(user), 'fhirUser leaked');
   }
 });
+
+test('an outage during discovery stops the sign-in with a server problem', async () => {
+  const server = (await import('node:http')).createServer((req, res) => {
+    res.writeHead(503, { 'content-type': 'application/json', 'retry-after': '10' });
+    res.end('{"Message":"OltpServerUnavailable"}');
+  });
+  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+  const redirectUri = `http://127.0.0.1:${await freePort()}/callback`;
+  const browser = fakeBrowser({ redirectUri });
+  try {
+    const r = await runLaunch(
+      { fhirBase: `http://127.0.0.1:${server.address().port}/fhir`, clientId: APP, redirectUri, waitMs: 1500, timeoutMs: 5000 },
+      { browser, prompter: pastePrompter(browser) },
+    );
+    assert.equal(top(r), 'server_error', JSON.stringify(ids(r)));
+    assert.ok(!ids(r).includes('wrong_base'));
+    assert.equal(browser.visited.length, 0, 'no sign-in is started against a server that is down');
+  } finally {
+    server.close();
+  }
+});

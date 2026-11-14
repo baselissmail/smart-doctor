@@ -465,7 +465,7 @@ ${byStage.map(({ s, items }) => `<li><a href="#${s.id}">${esc(s.title)} <span cl
       const cards = items
         .map(([id, c]) => {
           const seen = SEEN.filter((x) => x.expect === id)
-            .map((x) => `${x.body.error} ${x.body.error_description || ''}`)
+            .map((x) => Object.values(x.body).join(' '))
             .join(' ');
           const search = `${id} ${c.title} ${c.why} ${seen}`.toLowerCase();
           return `<li data-search="${esc(search)}"><a href="../${causeUrl(id)}"><span class="id">${id}</span><span class="t">${esc(c.title)}</span><span class="w">${esc(c.why)}</span></a></li>`;

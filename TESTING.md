@@ -109,6 +109,7 @@ node bin/smart-doctor.js init      # FHIR URL: https://fhir.epic.com/interconnec
 - Epic checks the client_id before login (unknown ID → an HTTP 200 "OAuth2 Error" page) but checks the redirect URI only after login; at the token endpoint an unregistered `redirect_uri` comes back as `invalid_client`.
 - A server may accept a client auth method it doesn't advertise in `token_endpoint_auth_methods_supported`.
 - A SMART configuration can be served from a cache with a stale `Date` header (no `Age`), which looks like clock skew.
+- Sandboxes go down. Epic's public sandbox answered both discovery documents with `503`, `Retry-After: 10` and `{"Message":"OltpServerUnavailable"}` (Nov 2026): a server problem, not a wrong base URL.
 
 ## 6. Your own real setup (last)
 

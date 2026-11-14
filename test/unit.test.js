@@ -397,3 +397,13 @@ test('redacting the client id masks whole values only', () => {
     .find((l) => l.startsWith('| FHIR access |'));
   assert.equal(row, '| FHIR access | Probe | PASS | client *** · application/fhir+json |');
 });
+
+test("explain reads a gateway's own JSON body as text", () => {
+  // Epic's public sandbox during an outage: not an OAuth error, so there is no "error" field.
+  assert.equal(explainError('{"Message":"OltpServerUnavailable"}').causes[0].id, 'server_error');
+  assert.equal(explainError('503 Service Unavailable').causes[0].id, 'server_error');
+  assert.equal(
+    explainError('{"error":"invalid_client"}').causes.some((c) => c.id === 'server_error'),
+    false,
+  );
+});

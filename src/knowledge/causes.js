@@ -228,7 +228,7 @@ export const CAUSES = {
   server_error: {
     stage: 'connection',
     title: 'Server-side error',
-    why: 'The token endpoint returned a 5xx error; this is usually not your request.',
+    why: 'The server answered with a 5xx error (for example 503 while it is down for maintenance); this is usually not your request.',
     fix: 'Retry later; if it persists, open a ticket with the vendor including the timestamp and your client_id.',
   },
   probe_failed: {
