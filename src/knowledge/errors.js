@@ -18,6 +18,12 @@ export const TEXT_PATTERNS = [
     confidence: 0.85,
     final: true,
   },
+  {
+    re: /(service|server)[ _-]?(is )?(temporarily )?unavailable|temporarily unavailable|under maintenance/i,
+    cause: 'server_error',
+    confidence: 0.8,
+    final: true,
+  },
   { re: /(none of the|no) keys?\b[^.]{0,40}\bkid\b/i, cause: 'kid_unknown', confidence: 0.85, final: true },
   { re: /(none of the|no) keys?\b[^.]{0,40}\balg\b/i, cause: 'jwks_no_alg', confidence: 0.85, final: true },
   {

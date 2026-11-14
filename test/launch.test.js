@@ -13,13 +13,21 @@ import { fakeBrowser, pastePrompter } from './fake-browser.js';
 const APP = 'launch-app';
 const COMPANY_REDIRECT = 'https://app.example-company.com/smart/callback';
 
+// A port for the sign-in redirect, chosen now and bound a moment later by the flow under test.
+// Asking the OS for one (port 0) and releasing it is a race: the mock EHR, or a test file running
+// in parallel, can be handed the same port in between. These come from below the range any OS
+// assigns for port 0 (Linux from 32768, macOS and Windows from 49152), so nothing else takes them.
+let nextPort = 20000 + (process.pid % 500) * 16;
 async function freePort() {
-  return new Promise((resolve) => {
-    const s = createServer().listen(0, '127.0.0.1', () => {
-      const { port } = s.address();
-      s.close(() => resolve(port));
+  for (;;) {
+    const port = nextPort++;
+    const free = await new Promise((resolve) => {
+      const s = createServer();
+      s.once('error', () => resolve(false));
+      s.listen(port, '127.0.0.1', () => s.close(() => resolve(true)));
     });
-  });
+    if (free) return port;
+  }
 }
 
 /**
@@ -298,5 +306,26 @@ test('patient and user ids reach the terminal but no shareable output', async ()
   for (const text of [...shared, renderHuman(r, { redact: true, verbose: true })]) {
     assert.ok(!text.includes(patient), 'patient id leaked');
     assert.ok(!text.includes(user), 'fhirUser leaked');
+  }
+});
+
+test('an outage during discovery stops the sign-in with a server problem', async () => {
+  const server = (await import('node:http')).createServer((req, res) => {
+    res.writeHead(503, { 'content-type': 'application/json', 'retry-after': '10' });
+    res.end('{"Message":"OltpServerUnavailable"}');
+  });
+  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+  const redirectUri = `http://127.0.0.1:${await freePort()}/callback`;
+  const browser = fakeBrowser({ redirectUri });
+  try {
+    const r = await runLaunch(
+      { fhirBase: `http://127.0.0.1:${server.address().port}/fhir`, clientId: APP, redirectUri, waitMs: 1500, timeoutMs: 5000 },
+      { browser, prompter: pastePrompter(browser) },
+    );
+    assert.equal(top(r), 'server_error', JSON.stringify(ids(r)));
+    assert.ok(!ids(r).includes('wrong_base'));
+    assert.equal(browser.visited.length, 0, 'no sign-in is started against a server that is down');
+  } finally {
+    server.close();
   }
 });

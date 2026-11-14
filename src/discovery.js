@@ -74,13 +74,32 @@ export async function discover({ fhirBase, timeoutMs, auth = 'private_key_jwt', 
       result.config = { token_endpoint: tokenFromCs, authorization_endpoint: oauthUrisFromCapabilityStatement(md.json).authorize };
       result.source = 'capability-statement';
       checks.push(check('discovery.capability', 'CapabilityStatement oauth-uris', STATUS.PASS, `token endpoint found in ${mdUrl}`));
+    } else if (md.networkError || md.status >= 500 || md.status === 429) {
+      // The server is failing, busy or stopped answering: that says nothing about the URL.
+      const retryAfter = md.headers?.['retry-after'];
+      const said = /<html|<!doctype/i.test(md.text || '') ? '' : (md.text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      checks.push(
+        check(
+          'discovery.available',
+          'FHIR server available',
+          STATUS.FAIL,
+          md.networkError
+            ? `${mdUrl}: ${md.networkError}`
+            : `${mdUrl} returned HTTP ${md.status}${retryAfter ? ` (Retry-After: ${retryAfter})` : ''}${said ? ` · ${said}` : ''}`,
+          md.status === 429
+            ? 'The server is rate limiting you. Wait for the Retry-After interval, then run the check again.'
+            : 'The server is failing or down for maintenance, so nothing on your side can be judged yet. Wait and run the check again.',
+          { status: md.status, retryAfter, networkError: md.networkError },
+        ),
+      );
+      return result;
     } else {
       checks.push(
         check(
           'discovery.capability',
           'CapabilityStatement oauth-uris',
           STATUS.FAIL,
-          md.networkError ? `${mdUrl}: ${md.networkError}` : `${mdUrl} returned HTTP ${md.status} with no oauth-uris token endpoint.`,
+          `${mdUrl} returned HTTP ${md.status} with no oauth-uris token endpoint.`,
           'Check that the FHIR base URL is right (it usually ends in /R4 or /api/FHIR/R4). You can also pass --token-url directly.',
         ),
       );

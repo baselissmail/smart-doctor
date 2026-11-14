@@ -5,7 +5,7 @@
 // (public sandbox or product + version). Never include client IDs, tokens or anything
 // from a customer's environment.
 
-/** @type {{ where: string, body: { error: string, error_description?: string }, expect: string }[]} */
+/** @type {{ where: string, body: Record<string, string>, expect: string }[]} */
 export const SEEN = [
   {
     where: 'SMART launcher (launch.smarthealthit.org)',
@@ -54,4 +54,6 @@ export const SEEN = [
   },
   { where: 'Public vendor sandbox', body: { error: 'Invalid Grant' }, expect: 'code_consumed' },
   { where: 'Public vendor sandbox', body: { error: 'invalid_code' }, expect: 'code_consumed' },
+  // Not an OAuth error: the body of an HTTP 503 (Retry-After: 10) from discovery while the sandbox was down.
+  { where: 'Epic public sandbox (fhir.epic.com)', body: { Message: 'OltpServerUnavailable' }, expect: 'server_error' },
 ];

@@ -136,7 +136,11 @@ export function diagnose(facts) {
   if (failed(m, 'jwks.private_leak')) add(cause('jwks_private_leak', 1, m.get('jwks.private_leak').detail));
 
   // Connectivity
+  const down = m.get('discovery.available');
   if (failed(m, 'discovery.reach') || t.networkError) add(cause('network', 0.95, t.networkError || m.get('discovery.reach')?.detail));
+  else if (failed(m, 'discovery.available') && !facts.tokenUrlOverride)
+    // An outage or rate limit during discovery is not a wrong URL.
+    add(cause(down.data?.networkError ? 'network' : down.data?.status === 429 ? 'rate_limited' : 'server_error', 0.9, down.detail));
   else if (failed(m, 'discovery.capability') && !facts.tokenUrlOverride)
     add(cause('wrong_base', 0.9, m.get('discovery.capability').detail));
 
@@ -314,7 +318,8 @@ export function explainError(text, { vendor, status } = {}) {
   const token = {
     status: status ?? (/\b429\b/.test(text) ? 429 : /\b5\d\d\b/.test(text) && !error ? 500 : undefined),
     error,
-    errorDescription: json?.error_description || (json ? undefined : text),
+    // JSON that is not an OAuth error (a gateway's own body, say) is read as text.
+    errorDescription: json?.error_description || (json?.error ? undefined : text),
   };
   return diagnose({ checks: [], token, vendor, jwksUrl: 'unknown' });
 }

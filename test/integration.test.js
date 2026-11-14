@@ -338,3 +338,49 @@ test('a secret the server echoes back reaches no output, not even in part', asyn
     }
   }
 });
+
+// A server that answers every request the same way, as one that is down or rate limiting does.
+async function everyRequestAnswers(status, headers, body, fn) {
+  const server = http.createServer((req, res) => {
+    res.writeHead(status, { 'content-type': 'application/json', ...headers });
+    res.end(JSON.stringify(body));
+  });
+  const port = await listen(server, 0, '127.0.0.1');
+  try {
+    return await fn(`http://127.0.0.1:${port}/fhir`);
+  } finally {
+    server.close();
+  }
+}
+
+test('an outage during discovery is a server problem, not a wrong base URL', async () => {
+  const key = await makeKey();
+  // Seen on Epic's public sandbox: HTTP 503, Retry-After: 10, {"Message":"OltpServerUnavailable"}.
+  const r = await everyRequestAnswers(503, { 'retry-after': '10' }, { Message: 'OltpServerUnavailable' }, (fhirBase) =>
+    runCheck({ fhirBase, clientId: CLIENT_ID, keyPath: key.pemPath, kid: key.kid }),
+  );
+  assert.equal(topCause(r), 'server_error');
+  assert.ok(!causeIds(r).includes('wrong_base'), 'the URL is not to blame');
+  assert.equal(checkStatus(r, 'discovery.available'), 'fail');
+  const evidence = r.diagnosis.causes[0].evidence;
+  assert.match(evidence, /HTTP 503 \(Retry-After: 10\)/);
+  assert.match(evidence, /OltpServerUnavailable/);
+  assert.equal(r.tokenRequested, false);
+});
+
+test('rate limiting during discovery is reported as rate limiting', async () => {
+  const key = await makeKey();
+  const r = await everyRequestAnswers(429, { 'retry-after': '30' }, { error: 'too_many_requests' }, (fhirBase) =>
+    runCheck({ fhirBase, clientId: CLIENT_ID, keyPath: key.pemPath, kid: key.kid }),
+  );
+  assert.equal(topCause(r), 'rate_limited');
+  assert.ok(!causeIds(r).includes('wrong_base'));
+});
+
+test('a base URL that answers 404 is still a wrong base URL', async () => {
+  const key = await makeKey();
+  const r = await everyRequestAnswers(404, {}, { error: 'not found' }, (fhirBase) =>
+    runCheck({ fhirBase, clientId: CLIENT_ID, keyPath: key.pemPath, kid: key.kid }),
+  );
+  assert.equal(topCause(r), 'wrong_base');
+});
