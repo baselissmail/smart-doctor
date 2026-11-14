@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.5 — 2026-11-15
 
 - Fixed: when a server answered discovery with HTTP 5xx or 429 (an outage, maintenance or rate limiting), smart-doctor said the FHIR base URL was wrong. It now says the server is failing or rate limiting, with the status, `Retry-After` and the server's own message as evidence. Seen on Epic's public sandbox (`503`, `{"Message":"OltpServerUnavailable"}`). A dropped connection on the second discovery request is now reported as a network problem.
 - `explain` reads a JSON body that is not an OAuth error (a gateway's own message, for example) as text, so `explain '{"Message":"OltpServerUnavailable"}'` names the cause.
+- `jose` 6.2.15.
 
 ## 0.2.4 — 2026-11-06
 
