@@ -1,6 +1,6 @@
 # Small image for CI / monitoring:  docker run --rm -v "$PWD:/work" smart-doctor check my-profile
 # Pinned to a digest (Dependabot keeps it current); the tag is for readers.
-FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
 LABEL org.opencontainers.image.title="smart-doctor" \
       org.opencontainers.image.description="Find out why a SMART on FHIR login fails, locally." \
       org.opencontainers.image.source="https://github.com/baselissmail/smart-doctor" \
